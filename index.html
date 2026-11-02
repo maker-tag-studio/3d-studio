@@ -2908,27 +2908,7 @@
       const code = input.value.trim().toUpperCase();
       if (!code) return;
 
-      // 1. レガシー固定テストコードの判定
-      if (code === 'PRO2026' || code === 'PRO') {
-        planTier = 'pro';
-        const baseTime = (proExpire > Date.now()) ? proExpire : Date.now();
-        proExpire = baseTime + 30 * 24 * 60 * 60 * 1000;
-        savePlanState();
-        applyProPlanUI();
-        input.value = '';
-        alert(isEnglish ? `👑 Unlimited PRO 30-Day Pass unlocked! (${getProDaysRemaining()} days left)` : `👑 PRO作り放題 30日間パス（商用ライセンス付）が解放されました！（残り ${getProDaysRemaining()}日）`);
-        return;
-      } else if (code === 'TICKET5' || code === 'TICKET') {
-        planTier = 'ticket';
-        ticketRemaining = Math.max(0, ticketRemaining) + 5;
-        savePlanState();
-        applyProPlanUI();
-        input.value = '';
-        alert(isEnglish ? `🎫 5-Design Ticket applied! (Remaining exports: ${ticketRemaining})` : `🎫 カスタム作成 5回チケットを適用しました！（残り出力回数: ${ticketRemaining}回）`);
-        return;
-      }
-
-      // 2. 使い捨てシリアルコード形式（例: TK5-8492-X7K / PRO-3194-Q9W）の判定
+      // 使い捨てシリアルコード形式（例: TK5-8492-X7K / PRO-3194-Q9W）の厳格な暗号検証
       const parts = code.split('-');
       if (parts.length === 3) {
         const prefix = parts[0];
@@ -3785,7 +3765,7 @@ ${componentsXml}      </components>
       }
       const passInput = document.getElementById('pro-passcode-input');
       if (passInput) {
-        passInput.placeholder = isEnglish ? 'Enter TICKET5 or PRO2026' : 'TICKET5 または PRO2026';
+        passInput.placeholder = isEnglish ? 'Enter serial code' : 'シリアルコードを入力';
       }
 
       // 全カテゴリー（店舗看板・表札・ペット・ネームタグ）のテンプレート文字も日英連動で切り替えて3Dモデルへ即座に反映
