@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YKL38KB4XD"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-YKL38KB4XD');
+  </script>
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -736,11 +746,13 @@
           proExpire = baseTime + 30 * 24 * 60 * 60 * 1000;
           savePlanState();
           shouldCleanUrl = true;
+          try { if (typeof gtag === 'function') gtag('event', 'purchase', { transaction_id: 'pro_' + Date.now(), value: 2700, currency: 'JPY', items: [{ item_name: 'PRO 30-Day Pass' }] }); } catch (e) {}
         } else if (unlockCode === 'ticket5' || unlockCode === 'ticket') {
           planTier = 'ticket';
           ticketRemaining = Math.max(ticketRemaining, 0) + 5;
           savePlanState();
           shouldCleanUrl = true;
+          try { if (typeof gtag === 'function') gtag('event', 'purchase', { transaction_id: 'tk5_' + Date.now(), value: 500, currency: 'JPY', items: [{ item_name: '5-Design Ticket' }] }); } catch (e) {}
         }
         // 🛡️ URL使い回し・ブックマークによる無限チャージ防止（アドレスバーから即座にクエリを消去）
         if (shouldCleanUrl && window.history && window.history.replaceState) {
@@ -2813,6 +2825,7 @@
     }
 
     function handleSelectTicketPlan() {
+      try { if (typeof gtag === 'function') gtag('event', 'begin_checkout', { value: 500, currency: 'JPY', items: [{ item_name: '5-Design Ticket' }] }); } catch (e) {}
       if (STRIPE_TICKET_URL) {
         window.open(STRIPE_TICKET_URL, '_blank');
         return;
@@ -2824,6 +2837,7 @@
     }
 
     function handleSelectProPlan() {
+      try { if (typeof gtag === 'function') gtag('event', 'begin_checkout', { value: 2700, currency: 'JPY', items: [{ item_name: 'PRO 30-Day Pass' }] }); } catch (e) {}
       if (STRIPE_PRO_URL) {
         window.open(STRIPE_PRO_URL, '_blank');
         return;
@@ -3228,6 +3242,7 @@ ${componentsXml}      </components>
         applyProPlanUI();
       }
 
+      try { if (typeof gtag === 'function') gtag('event', 'download_3d_file', { file_format: pendingExportType, mode: currentMode, plan: planTier }); } catch (e) {}
       closeModal();
     }
 
