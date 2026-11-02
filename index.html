@@ -36,7 +36,7 @@
       <h1 class="text-base md:text-lg font-bold tracking-wide" id="ui-title">3D Sign & Tag Studio</h1>
     </div>
     <div class="flex items-center gap-2">
-      <button onclick="toggleProPlanMode()" id="btn-plan-toggle" class="text-xs bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40 font-bold px-2.5 py-1 rounded transition">🎁 お試し版（見本ON）</button>
+      <button onclick="openPricingModal()" id="btn-plan-toggle" class="text-xs bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40 font-bold px-2.5 py-1 rounded transition">🎁 お試し版（見本ON）</button>
       <button onclick="toggleLang()" id="btn-lang" class="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2.5 py-1 rounded transition">🌐 EN / 日本語</button>
       <button onclick="openPricingModal()" id="btn-pro-plan" class="text-xs bg-amber-500/20 text-amber-400 border border-amber-500/40 hover:bg-amber-500/30 font-bold px-3 py-1 rounded transition">✨ Proプラン (商用OK)</button>
     </div>
@@ -723,12 +723,13 @@
         proExpire = isNaN(savedExpire) ? 0 : savedExpire;
 
         if (savedTier === 'pro') {
-          if (proExpire > 0 && Date.now() > proExpire) {
+          if (proExpire && proExpire > Date.now()) {
+            planTier = 'pro';
+          } else {
+            // 有効期限が保存されていない、または期限切れの場合は無料（お試し）にリセット
             planTier = 'free';
             proExpire = 0;
             savePlanState();
-          } else {
-            planTier = 'pro';
           }
         } else if (savedTier === 'ticket' && ticketRemaining > 0) {
           planTier = 'ticket';
@@ -2636,8 +2637,7 @@
     }
 
     function getProDaysRemaining() {
-      if (planTier !== 'pro') return 0;
-      if (!proExpire || proExpire <= 0) return 30;
+      if (planTier !== 'pro' || !proExpire || proExpire <= Date.now()) return 0;
       const diffMs = proExpire - Date.now();
       if (diffMs <= 0) return 0;
       return Math.ceil(diffMs / (24 * 60 * 60 * 1000));
