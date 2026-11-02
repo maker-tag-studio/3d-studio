@@ -36,9 +36,9 @@
       <h1 class="text-base md:text-lg font-bold tracking-wide" id="ui-title">3D Sign & Tag Studio</h1>
     </div>
     <div class="flex items-center gap-2">
-      <button onclick="openPricingModal()" id="btn-plan-toggle" class="text-xs bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40 font-bold px-2.5 py-1 rounded transition">🎁 お試し版（見本ON）</button>
+      <button onclick="openPricingModal()" id="btn-plan-toggle" class="hidden"></button>
       <button onclick="toggleLang()" id="btn-lang" class="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2.5 py-1 rounded transition">🌐 EN / 日本語</button>
-      <button onclick="openPricingModal()" id="btn-pro-plan" class="text-xs bg-amber-500/20 text-amber-400 border border-amber-500/40 hover:bg-amber-500/30 font-bold px-3 py-1 rounded transition">✨ Proプラン (商用OK)</button>
+      <button onclick="openPricingModal()" id="btn-pro-plan" class="text-xs bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40 font-bold px-3 py-1 rounded transition">✨ 料金プラン (商用OK)</button>
     </div>
   </header>
 
@@ -567,7 +567,7 @@
       <div class="flex justify-between items-center mb-3">
         <div class="flex items-center gap-2">
           <span class="bg-amber-500/20 text-amber-400 text-xs font-bold px-2.5 py-1 rounded border border-amber-500/30" id="lbl-modal-badge">3MF / STL データ出力＆プラン選択</span>
-          <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700" id="lbl-modal-current-status">現在：お試し(Free)</span>
+          <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700" id="lbl-modal-current-status">ステータス：無料</span>
         </div>
         <button onclick="closeModal()" class="text-slate-400 hover:text-white text-lg px-1">✕</button>
       </div>
@@ -580,7 +580,7 @@
         <!-- ① お試し（Free） -->
         <div id="card-plan-free" onclick="selectPlanForTest('free')" class="p-3 rounded-lg border border-slate-700 bg-slate-950/80 hover:border-slate-500 cursor-pointer transition flex justify-between items-center gap-2">
           <div>
-            <div class="font-bold text-xs text-slate-200" id="lbl-modal-p0-title">🎁 無料体験（Free）：0円</div>
+            <div class="font-bold text-xs text-slate-200" id="lbl-modal-p0-title">🎁 無料プレビュー（文字入れ・3D確認）：0円</div>
             <div class="text-[11px] text-slate-400 mt-0.5" id="lbl-modal-p0-desc">自由な文字・名前入力、全13書体、3D回転プレビュー、色替え体験まで完全無料（※3MF・STLデータの保存・書き出しのみチケットまたはPROが必要です）</div>
           </div>
           <div class="text-right whitespace-nowrap ml-2">
@@ -2643,6 +2643,15 @@
       return Math.ceil(diffMs / (24 * 60 * 60 * 1000));
     }
 
+    function getProExpireFormatted(isEn) {
+      if (!proExpire || proExpire <= 0) return '';
+      const d = new Date(proExpire);
+      if (isEn) {
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      }
+      return `${d.getMonth() + 1}月${d.getDate()}日`;
+    }
+
     function openExportModal(type) {
       pendingExportType = type;
       applyProPlanUI();
@@ -2701,37 +2710,29 @@
       const toggleBtn = document.getElementById('btn-plan-toggle');
       const proBtn = document.getElementById('btn-pro-plan');
 
+      // 余計な「無料体験中」ボタンはヘッダーから消してスッキリさせる
+      if (toggleBtn) {
+        toggleBtn.classList.add('hidden');
+      }
+
       if (planTier === 'ticket') {
-        if (toggleBtn) {
-          toggleBtn.className = 'text-xs bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/50 font-bold px-2.5 py-1 rounded transition';
-          toggleBtn.innerText = isEnglish
-            ? `🎫 5-Ticket Active (${ticketRemaining} left)`
-            : `🎫 5回チケット適用中（残り ${ticketRemaining}回）`;
-        }
         if (proBtn) {
+          proBtn.className = 'text-xs bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/50 font-bold px-3 py-1 rounded transition';
           proBtn.innerText = isEnglish
-            ? `🎫 ${ticketRemaining} Left (Plans)`
-            : `🎫 残り${ticketRemaining}回（プラン確認）`;
+            ? `🎫 ${ticketRemaining} remaining`
+            : `🎫 残り ${ticketRemaining}回`;
         }
       } else if (planTier === 'pro') {
-        const daysLeft = getProDaysRemaining();
-        if (toggleBtn) {
-          toggleBtn.className = 'text-xs bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 font-bold px-2.5 py-1 rounded transition';
-          toggleBtn.innerText = isEnglish
-            ? `👑 PRO 30-Day Pass (${daysLeft}d left)`
-            : `👑 PRO 30日パス適用中（残り ${daysLeft}日）`;
-        }
+        const dateStr = getProExpireFormatted(isEnglish);
         if (proBtn) {
-          proBtn.innerText = isEnglish ? `👑 PRO (${daysLeft}d left)` : `👑 PROパス（残り ${daysLeft}日）`;
+          proBtn.className = 'text-xs bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 font-bold px-3 py-1 rounded transition';
+          proBtn.innerText = isEnglish
+            ? `👑 Valid until ${dateStr}`
+            : `👑 ${dateStr}まで有効`;
         }
       } else {
-        if (toggleBtn) {
-          toggleBtn.className = 'text-xs bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40 font-bold px-2.5 py-1 rounded transition';
-          toggleBtn.innerText = isEnglish
-            ? '🎁 Free Trial (Input Free • DL Ticket Required)'
-            : '🎁 無料体験中（入力自由・保存のみチケット制）';
-        }
         if (proBtn) {
+          proBtn.className = 'text-xs bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40 font-bold px-3 py-1 rounded transition';
           proBtn.innerText = isEnglish ? '✨ Plans & Commercial License' : '✨ 料金プラン (商用OK)';
         }
       }
@@ -2758,21 +2759,21 @@
 
       if (planTier === 'free') {
         if (statusBadge) {
-          statusBadge.className = 'text-[11px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-600';
-          statusBadge.innerText = isEnglish ? 'Current: Free ($0)' : '現在：お試し（Free・0円）';
+          statusBadge.className = 'text-[11px] font-bold px-2.5 py-1 rounded bg-slate-800 text-slate-300 border border-slate-600';
+          statusBadge.innerText = isEnglish ? 'Status: Free' : 'ステータス：無料';
         }
         if (dlBtn) {
           dlBtn.className = 'w-full bg-slate-800 text-slate-400 border border-slate-700 font-bold py-3 px-3 rounded-lg transition text-xs sm:text-sm mb-2 cursor-not-allowed';
           dlBtn.innerText = isEnglish
-            ? '🔒 3MF / STL Export Disabled in Free Trial (Select 5-Ticket or PRO Plan above)'
-            : '🔒 お試し（Free）では3MF・STLデータの出力はできません（上のチケットまたはPROを選択）';
+            ? '🔒 Select 5-Ticket or PRO Plan above to export 3D files'
+            : '🔒 3MF / STLの出力には上のチケットまたはPROを選択してください';
         }
       } else if (planTier === 'ticket') {
         if (statusBadge) {
-          statusBadge.className = 'text-[11px] font-bold px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/40';
+          statusBadge.className = 'text-[11px] font-bold px-2.5 py-1 rounded bg-sky-500/20 text-sky-300 border border-sky-500/50 shadow-sm';
           statusBadge.innerText = isEnglish
-            ? `Current: 5-Ticket (${ticketRemaining} left)`
-            : `現在：5回チケット（残り ${ticketRemaining}回）`;
+            ? `Status: ${ticketRemaining} remaining`
+            : `ステータス：残り ${ticketRemaining}回`;
         }
         if (dlBtn) {
           dlBtn.className = 'w-full bg-gradient-to-r from-sky-400 to-blue-500 hover:from-sky-300 hover:to-blue-400 text-slate-950 font-extrabold py-3 px-3 rounded-lg shadow-lg transition text-xs sm:text-sm mb-2';
@@ -2781,16 +2782,18 @@
             : `🎫 チケットを1回使ってダウンロード (${extLabel})（残り ${ticketRemaining}回 ➔ ${ticketRemaining - 1}回）`;
         }
       } else {
-        const daysLeft = getProDaysRemaining();
+        const dateStr = getProExpireFormatted(isEnglish);
         if (statusBadge) {
-          statusBadge.className = 'text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
-          statusBadge.innerText = isEnglish ? `Current: PRO 30-Day Pass (${daysLeft}d left)` : `現在：PRO 30日パス（残り ${daysLeft}日）`;
+          statusBadge.className = 'text-[11px] font-bold px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-sm';
+          statusBadge.innerText = isEnglish
+            ? `Status: Valid until ${dateStr}`
+            : `ステータス：${dateStr}まで有効`;
         }
         if (dlBtn) {
           dlBtn.className = 'w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold py-3 px-3 rounded-lg shadow-lg transition text-xs sm:text-sm mb-2';
           dlBtn.innerText = isEnglish
-            ? `👑 PRO 30-Day Pass: Download (${extLabel} • ${daysLeft}d left)`
-            : `👑 PRO 30日パス：今すぐダウンロード (${extLabel}・残り ${daysLeft}日)`;
+            ? `👑 Download ${extLabel} (PRO Unlimited • Until ${dateStr})`
+            : `👑 今すぐダウンロード (${extLabel}・${dateStr}まで使い放題)`;
         }
       }
     }
@@ -3526,7 +3529,7 @@ ${componentsXml}      </components>
         'lbl-modal-badge': '3MF / STL データ出力＆プラン選択',
         'lbl-modal-title': '料金プランの選択・データ書き出し',
         'lbl-modal-desc': '生成された3MF/STLデータはすべてのスライサーソフト（Bambu Studio、PrusaSlicer、OrcaSlicer、Cura等）にそのまま読み込めます。',
-        'lbl-modal-p0-title': '🎁 無料体験（Free）：0円',
+        'lbl-modal-p0-title': '🎁 無料プレビュー（文字入れ・3D確認）：0円',
         'lbl-modal-p0-desc': '自由な文字・名前入力、全13書体、3D回転プレビュー、色替え体験まで完全無料（※3MF・STLデータの保存・書き出しのみチケットまたはPROが必要です）',
         'lbl-modal-p0-price': '0円（完全無料）',
         'lbl-modal-p1-badge': '個人向け・1デザインあたり100円（ワンコイン）',
@@ -3738,7 +3741,7 @@ ${componentsXml}      </components>
         'lbl-modal-badge': '3MF / STL Export & Plan Selection',
         'lbl-modal-title': 'Select Plan & Export 3D Data',
         'lbl-modal-desc': 'Generated 3MF/STL files are 100% compatible with all slicers (Bambu Studio, PrusaSlicer, OrcaSlicer, Cura, Anycubic, Creality).',
-        'lbl-modal-p0-title': '🎁 Free Trial: $0',
+        'lbl-modal-p0-title': '🎁 Free 3D Preview: $0',
         'lbl-modal-p0-desc': 'Full custom text input, all 13 fonts, 3D rotating preview, and color changes are 100% free (*Only 3MF/STL file download requires a ticket or PRO)',
         'lbl-modal-p0-price': '$0 (Free)',
         'lbl-modal-p1-badge': 'Personal • $0.70 / ¥100 per design (One Coin)',
