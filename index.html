@@ -1,0 +1,3788 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>3D Sign & Tag Studio - 立体看板・表札・ペット迷子札・ネームタグ生成ツール</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts（3Dプリント・看板向け厳選フォント） -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Black+Ops+One&family=Dela+Gothic+One&family=Hachi+Maru+Pop&family=Kaisei+Tokumin:wght@800&family=M+PLUS+Rounded+1c:wght@800;900&family=Noto+Sans+JP:wght@900&family=Noto+Serif+JP:wght@900&family=Reggae+One&family=Russo+One&family=Yuji+Boku&family=Yuji+Syuku&family=Zen+Antique&display=swap" rel="stylesheet">
+  <!-- Three.js & Exporters -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/STLExporter.js"></script>
+  <!-- QR Code Generator -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+</head>
+<body class="bg-slate-950 text-white font-sans h-screen overflow-hidden flex flex-col">
+
+  <!-- ヘッダー -->
+  <header class="bg-slate-900 border-b border-slate-800 px-4 py-2 flex items-center justify-between shrink-0 z-20">
+    <div class="flex items-center gap-2">
+      <span class="bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 text-[11px] font-extrabold px-2 py-0.5 rounded">STUDIO PRO v3.5</span>
+      <h1 class="text-base md:text-lg font-bold tracking-wide" id="ui-title">3D Sign & Tag Studio</h1>
+    </div>
+    <div class="flex items-center gap-2">
+      <button onclick="toggleProPlanMode()" id="btn-plan-toggle" class="text-xs bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40 font-bold px-2.5 py-1 rounded transition">🎁 お試し版（見本ON）</button>
+      <button onclick="toggleLang()" id="btn-lang" class="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2.5 py-1 rounded transition">🌐 EN / 日本語</button>
+      <button onclick="openPricingModal()" id="btn-pro-plan" class="text-xs bg-amber-500/20 text-amber-400 border border-amber-500/40 hover:bg-amber-500/30 font-bold px-3 py-1 rounded transition">✨ Proプラン (商用OK)</button>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
+
+    <!-- 3Dプレビュー領域 -->
+    <div class="h-[45%] md:h-full md:flex-1 relative bg-slate-950 order-1 md:order-2 flex flex-col">
+      <div class="absolute top-3 left-3 z-10 bg-slate-900/80 backdrop-blur px-3 py-1.5 rounded-lg text-xs text-slate-300 border border-slate-800 pointer-events-none flex items-center gap-2">
+        <span>🖱️ <span id="ui-hint">ドラッグで回転 / ホイール・ピンチで拡大縮小</span></span>
+      </div>
+
+      <!-- 視点切り替えボタン -->
+      <div class="absolute bottom-3 right-3 z-10 flex gap-2 flex-wrap justify-end">
+        <button onclick="toggleTextDragMode()" id="btn-text-drag-mode" class="bg-slate-800/90 hover:bg-slate-700 text-amber-300 font-bold text-xs px-2.5 py-1.5 rounded border border-amber-500/40 shadow transition">
+          ✥ マウスで文字移動: OFF
+        </button>
+        <button onclick="flipBoard()" id="btn-flip" class="hidden bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-3 py-1.5 rounded shadow transition">
+          🔄 表 ⇄ 裏を反転
+        </button>
+        <button onclick="viewStandAngle()" id="btn-stand-view" class="bg-slate-800/90 hover:bg-slate-700 text-xs px-2.5 py-1.5 rounded border border-slate-700 shadow">
+          📐 カウンター視点
+        </button>
+        <button onclick="resetCamera()" id="btn-reset-cam" class="bg-slate-800/90 hover:bg-slate-700 text-xs px-2.5 py-1.5 rounded border border-slate-700 shadow">正面リセット</button>
+      </div>
+      <div id="canvas-container" class="w-full h-full flex-1"></div>
+    </div>
+
+    <!-- 操作パネル -->
+    <div class="h-[55%] md:h-full w-full md:w-[430px] bg-slate-900 border-t md:border-t-0 md:border-r border-slate-800 p-4 md:p-5 overflow-y-auto order-2 md:order-1 flex flex-col gap-4 z-10">
+
+      <!-- ① モード切替タブ -->
+      <div>
+        <label class="block text-xs font-bold text-slate-400 mb-1.5" id="lbl-mode">① 作成モードを選択</label>
+        <div class="grid grid-cols-4 gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-[11px]">
+          <button onclick="switchMode('qr')" id="tab-qr" class="py-2 px-1 font-bold rounded-md bg-amber-500 text-slate-950 transition text-center">🏢 店舗看板</button>
+          <button onclick="switchMode('jp')" id="tab-jp" class="py-2 px-1 font-bold rounded-md text-slate-300 hover:bg-slate-800 transition text-center">🏠 表札</button>
+          <button onclick="switchMode('pet')" id="tab-pet" class="py-2 px-1 font-bold rounded-md text-slate-300 hover:bg-slate-800 transition text-center">🐾 ペット</button>
+          <button onclick="switchMode('tag')" id="tab-tag" class="py-2 px-1 font-bold rounded-md text-slate-300 hover:bg-slate-800 transition text-center">🔑 ネームタグ</button>
+        </div>
+      </div>
+
+      <!-- 看板用スタンド設定（店舗看板・和風札の時だけ表示） -->
+      <div id="box-sign-stand" class="bg-slate-950/80 p-3 rounded-lg border border-amber-500/40 flex flex-col gap-2">
+        <div class="flex justify-between items-center">
+          <span class="text-xs font-bold text-amber-300" id="lbl-stand-title">📐 看板の立て方・底のスタンド形状</span>
+          <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-bold" id="lbl-stand-badge">自立オート接地</span>
+        </div>
+        <select id="stand-type" onchange="scheduleUpdate()" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none">
+          <option id="opt-stand-stand" value="stand">🛋️ 斜め自立スタンド型（机の上に14度傾いてシャキッと立つ）</option>
+          <option id="opt-stand-base-slot" value="base-slot">🏛️ 差し込み式台座（スロット台座ブロックに差し込んで立てる）</option>
+          <option id="opt-stand-flat" value="flat">📄 フラット看板（壁貼り・マグネット用）</option>
+          <option id="opt-stand-holes" value="holes">🔩 四隅ネジ穴付きプレート</option>
+          <option id="opt-stand-hanging" value="hanging">🧵 上部吊り下げ穴（ひも・チェーン用）</option>
+        </select>
+      </div>
+
+      <!-- モード別設定パネル：1. 店舗看板モード（🌟 QRあり/なし両対応！） -->
+      <div id="panel-qr" class="flex flex-col gap-3 bg-slate-950/60 p-3.5 rounded-lg border border-slate-800">
+        <div class="flex justify-between items-center">
+          <span class="text-xs font-bold text-amber-400" id="lbl-qr-title">店舗・ビジネス看板設定</span>
+        </div>
+
+        <!-- 🌟 QRコードの「あり／なし」切替トグル -->
+        <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-700 flex items-center justify-between">
+          <div>
+            <div class="text-xs font-bold text-white" id="lbl-qr-enable-title">QRコードの配置</div>
+            <div class="text-[10px] text-slate-400" id="lbl-qr-enable-desc">「なし」にすると文字がドーンと中央に拡大されます</div>
+          </div>
+          <select id="qr-enable" onchange="toggleQrEnableUI()" class="bg-slate-950 border border-slate-600 rounded px-2 py-1 text-xs text-amber-400 font-bold focus:outline-none">
+            <option id="opt-qr-yes" value="yes">✅ QRコードあり</option>
+            <option id="opt-qr-no" value="no">🚫 QRコードなし（文字のみ）</option>
+          </select>
+        </div>
+
+        <!-- 🌟 外枠フレーム（縁）の「あり／なし」切替 -->
+        <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-700 flex items-center justify-between">
+          <div>
+            <div class="text-xs font-bold text-white" id="lbl-qr-frame-title">看板の外枠（立体縁取り）</div>
+            <div class="text-[10px] text-slate-400" id="lbl-qr-frame-desc">外周を囲む立体フレームラインの有無</div>
+          </div>
+          <select id="qr-frame" onchange="scheduleUpdate()" class="bg-slate-950 border border-slate-600 rounded px-2 py-1 text-xs text-amber-400 font-bold focus:outline-none">
+            <option id="opt-qrf-yes" value="yes">あり（立体フレーム付）</option>
+            <option id="opt-qrf-no" value="no">なし（フレームなし・すっきり）</option>
+          </select>
+        </div>
+
+        <!-- QRコードURL入力枠（QRありの時のみ有効） -->
+        <div id="box-qr-url">
+          <label class="block text-[11px] text-slate-300 mb-1" id="lbl-qr-url">QRコードにするURL / 文字列</label>
+          <input type="text" id="qr-url" value="https://instagram.com" placeholder="https://example.com" oninput="scheduleUpdate()" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-sm text-white focus:border-amber-500 focus:outline-none">
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[11px] text-slate-300 mb-1" id="lbl-qr-top">上部テキスト（メイン文字）</label>
+            <input type="text" id="qr-top-text" value="FOLLOW US" placeholder="Free Text (1)" oninput="scheduleUpdate()" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-sm text-white focus:border-amber-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-300 mb-1" id="lbl-qr-bot">下部テキスト（サブ文字）</label>
+            <input type="text" id="qr-bottom-text" value="SCAN ME" placeholder="Free Text (2)" oninput="scheduleUpdate()" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-sm text-white focus:border-amber-500 focus:outline-none">
+          </div>
+        </div>
+      </div>
+
+      <!-- モード別設定パネル：2. 表札・ドアプレートモード -->
+      <div id="panel-jp" class="hidden flex-col gap-3 bg-slate-950/60 p-3.5 rounded-lg border border-slate-800">
+        <div class="flex justify-between items-center">
+          <span class="text-xs font-bold text-amber-400" id="lbl-jp-title">🏠 表札・ドアプレート設定</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[11px] text-slate-300 mb-1" id="lbl-jp-front">メイン文字（苗字・お名前）</label>
+            <input type="text" id="jp-text" value="佐藤" placeholder="Free Text (1)" oninput="scheduleUpdate()" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-sm text-white focus:border-amber-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-300 mb-1" id="lbl-jp-sub">サブ文字（英字・番地・部屋番号）</label>
+            <input type="text" id="jp-text-sub" value="SATO" placeholder="Free Text (2)" oninput="scheduleUpdate()" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-sm text-white focus:border-amber-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[11px] text-slate-300 mb-1" id="lbl-jp-dir">レイアウト（文字の向き）</label>
+            <select id="jp-dir" onchange="onJpDirChanged()" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-white">
+              <option id="opt-jpd-horiz" value="horizontal">横書き（標準・マンション・洋風表札）</option>
+              <option id="opt-jpd-vert" value="vertical">縦書き（戸建て・和風表札）</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-300 mb-1" id="lbl-jp-frame">外枠・縁デザイン</label>
+            <select id="jp-frame" onchange="scheduleUpdate()" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-white">
+              <option id="opt-jpf-wood" value="wood">シンプル外枠（モダン表札定番）</option>
+              <option id="opt-jpf-double" value="double">二重枠（格調高い和モダン枠）</option>
+              <option id="opt-jpf-retro" value="retro">太枠（くっきり重厚フレーム）</option>
+              <option id="opt-jpf-none" value="none">🚫 枠・縁なし（フラット・文字のみ）</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="bg-slate-900/70 border border-slate-800 p-2 rounded-lg flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-[11px] font-bold text-slate-300" id="lbl-jp-rev-title">🔄 表裏リバーシブル（両面プレートにする）</div>
+              <div class="text-[9px] text-slate-400" id="lbl-jp-rev-desc">裏面にも文字を入れる場合のみON</div>
+            </div>
+            <input type="checkbox" id="jp-reversible" onchange="toggleReversibleUI()" class="w-4 h-4 accent-amber-500 cursor-pointer">
+          </div>
+          <div id="box-jp-back" class="hidden">
+            <label class="block text-[10px] text-slate-300 mb-1" id="lbl-jp-back">【裏面】の文字</label>
+            <input type="text" id="jp-text-back" value="不在" placeholder="Free Text (Back)" oninput="scheduleUpdate()" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white focus:border-amber-500 focus:outline-none">
+          </div>
+        </div>
+      </div>
+
+      <!-- モード別設定パネル：3. ペットモード -->
+      <div id="panel-pet" class="hidden flex-col gap-3 bg-slate-950/60 p-3.5 rounded-lg border border-slate-800">
+        <div class="text-xs font-bold text-amber-400" id="lbl-pet-title">🐾 愛犬・愛猫 ペット用プレート（迷子札・ネームタグ）</div>
+
+        <!-- ペットのお名前＆連絡先入力 -->
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[11px] text-slate-300 mb-1" id="lbl-pet-name">ペットのお名前</label>
+            <input type="text" id="pet-name" value="MOKO" placeholder="Free Text (1)" oninput="scheduleUpdate()" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-sm text-white focus:border-amber-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-300 mb-1" id="lbl-pet-tel">飼い主の電話番号 (TEL)</label>
+            <input type="text" id="pet-tel" value="090-1234-5678" placeholder="TEL: 090-XXXX-XXXX" oninput="scheduleUpdate()" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-sm text-white focus:border-amber-500 focus:outline-none">
+          </div>
+        </div>
+
+        <!-- ① 形状テンプレート選択（シンプル・定番幾何学シェイプ） -->
+        <div>
+          <label class="block text-[11px] text-slate-300 font-bold mb-1.5" id="lbl-pet-shape-title">① プレート形状を選択（定番・シンプル形状）</label>
+          <div class="grid grid-cols-3 gap-1.5 text-center text-xs">
+            <button type="button" onclick="setPetShape('round')" id="btn-shape-round" class="p-2 rounded-lg border border-amber-500 bg-amber-500/20 text-white font-bold flex flex-col items-center gap-1 transition shadow">
+              <span class="text-xl leading-none text-amber-300">〇</span>
+              <span class="text-[10px]" id="txt-shape-round">丸型・サークル</span>
+            </button>
+            <button type="button" onclick="setPetShape('diamond')" id="btn-shape-diamond" class="p-2 rounded-lg border border-slate-700 bg-slate-900 hover:border-slate-500 text-slate-300 font-bold flex flex-col items-center gap-1 transition">
+              <span class="text-xl leading-none text-amber-300">◇</span>
+              <span class="text-[10px]" id="txt-shape-diamond">ひし形・ダイヤ</span>
+            </button>
+            <button type="button" onclick="setPetShape('square')" id="btn-shape-square" class="p-2 rounded-lg border border-slate-700 bg-slate-900 hover:border-slate-500 text-slate-300 font-bold flex flex-col items-center gap-1 transition">
+              <span class="text-xl leading-none text-amber-300">□</span>
+              <span class="text-[10px]" id="txt-shape-square">角丸スクエア</span>
+            </button>
+            <button type="button" onclick="setPetShape('rect')" id="btn-shape-rect" class="p-2 rounded-lg border border-slate-700 bg-slate-900 hover:border-slate-500 text-slate-300 font-bold flex flex-col items-center gap-1 transition">
+              <span class="text-xl leading-none text-amber-300">▭</span>
+              <span class="text-[10px]" id="txt-shape-rect">角丸長方形</span>
+            </button>
+            <button type="button" onclick="setPetShape('capsule')" id="btn-shape-capsule" class="p-2 rounded-lg border border-slate-700 bg-slate-900 hover:border-slate-500 text-slate-300 font-bold flex flex-col items-center gap-1 transition">
+              <span class="text-xl leading-none text-amber-300">⬭</span>
+              <span class="text-[10px]" id="txt-shape-capsule">小判・カプセル</span>
+            </button>
+            <button type="button" onclick="setPetShape('hex')" id="btn-shape-hex" class="p-2 rounded-lg border border-slate-700 bg-slate-900 hover:border-slate-500 text-slate-300 font-bold flex flex-col items-center gap-1 transition">
+              <span class="text-xl leading-none text-amber-300">⬡</span>
+              <span class="text-[10px]" id="txt-shape-hex">六角形タグ</span>
+            </button>
+          </div>
+          <input type="hidden" id="pet-shape" value="round">
+        </div>
+
+        <!-- ③ フチ取りリム設定 -->
+        <div class="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800 flex flex-col gap-2">
+          <!-- 🌟 全形状対応の立体フチ取りリム（Accent Rim）の切替 -->
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-[11px] font-bold text-white" id="lbl-pet-frame-title">外周の立体フチ（縁取りライン）</div>
+              <div class="text-[9px] text-slate-400" id="lbl-pet-frame-desc">プレート外周に沿った2色目立体フレームの有無</div>
+            </div>
+            <select id="pet-frame" onchange="scheduleUpdate()" class="bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-amber-400 font-bold focus:outline-none">
+              <option id="opt-ptf-yes" value="yes">あり（立体フチ付・おすすめ）</option>
+              <option id="opt-ptf-no" value="no">なし（フチなし・フラット）</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ④ 迷子札（裏面エングレーブ/エンボス）機能 -->
+        <div class="bg-amber-500/10 border border-amber-500/30 p-2.5 rounded-lg flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-xs font-bold text-amber-300" id="lbl-pet-rev-title">🔄 迷子札の裏面設定（TEL・連絡先）</div>
+              <div class="text-[10px] text-slate-300" id="lbl-pet-rev-desc">裏面に電話番号やマイクロチップ情報を刻印</div>
+            </div>
+            <input type="checkbox" id="pet-reverse-enable" onchange="togglePetReverseUI()" class="w-5 h-5 accent-amber-500 cursor-pointer">
+          </div>
+          <div id="box-pet-reverse" class="hidden flex-col gap-2 pt-2 border-t border-amber-500/20">
+            <button type="button" onclick="flipBoard()" id="btn-pet-flip-inline" class="w-full py-1.5 px-3 rounded-md bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 shadow transition">
+              <span>🔄</span>
+              <span id="txt-pet-flip-inline">表 ⇄ 裏をひっくり返して確認する</span>
+            </button>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[10px] text-slate-300 mb-1" id="lbl-pet-back-tel">裏面TEL / 連絡先</label>
+                <input type="text" id="pet-back-tel" value="TEL: 090-1234-5678" oninput="scheduleUpdate()" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+              </div>
+              <div>
+                <label class="block text-[10px] text-slate-300 mb-1" id="lbl-pet-back-sub">裏面サブ文字（住所・Chip等）</label>
+                <input type="text" id="pet-back-sub" value="MICROCHIPPED" oninput="scheduleUpdate()" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] text-slate-300" id="lbl-pet-back-style">裏面の刻印スタイル</span>
+              <select id="pet-back-style" onchange="scheduleUpdate()" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-amber-300 font-bold">
+                <option id="opt-pbs-emboss" value="emboss">✨ 浮き彫り（凸・2色AMS印刷用）</option>
+                <option id="opt-pbs-engrave" value="engrave">⚡ 彫り込み（凹・エングレーブ）</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- ⑤ 首輪リング穴設定（位置・内径） -->
+        <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] text-amber-300 font-bold mb-1" id="lbl-pet-pos">首輪リングの位置</label>
+              <select id="pet-hole-pos" onchange="scheduleUpdate()" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none">
+                <option id="opt-pth-top" value="top">☝️ 上部中央（定番・首輪用）</option>
+                <option id="opt-pth-top-right" value="top-right">↗️ 右上（斜め吊り・耳上）</option>
+                <option id="opt-pth-left" value="left">👈 左端中央（横向き）</option>
+                <option id="opt-pth-inside-top" value="inside-top">⭕ 上部内側穴（突起なし）</option>
+                <option id="opt-pth-none" value="none">🚫 リング穴なし（プレート用）</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-300 mb-1" id="lbl-pet-dia">穴の直径 (mm)</label>
+              <input type="number" id="pet-hole-dia" value="3.5" min="2.0" max="7.5" step="0.5" onchange="scheduleUpdate()" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1 text-sm text-white">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- モード別設定パネル：4. キーホルダー・ネームタグモード -->
+      <div id="panel-tag" class="hidden flex-col gap-3 bg-slate-950/60 p-3.5 rounded-lg border border-slate-800">
+        <div class="text-xs font-bold text-amber-400" id="lbl-tag-title">名入れキーホルダー・タグ設定</div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[11px] text-slate-300 mb-1" id="lbl-tag-text">入れる文字（お名前など）</label>
+            <input type="text" id="tag-text" value="TARO" placeholder="Free Text (1)" oninput="scheduleUpdate()" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-sm text-white focus:border-amber-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-300 mb-1" id="lbl-tag-sub">フリー入力（誕生日・番号など）</label>
+            <input type="text" id="tag-sub" value="" placeholder="Free Text (2)" oninput="scheduleUpdate()" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-sm text-white focus:border-amber-500 focus:outline-none">
+          </div>
+        </div>
+
+        <!-- ① ネームタグ形状テンプレート選択（6種） -->
+        <div>
+          <label class="block text-[11px] text-slate-300 font-bold mb-1.5" id="lbl-tag-shape-title">① タグの形状を選択（6種類）</label>
+          <div class="grid grid-cols-3 gap-1.5 text-center text-xs">
+            <button type="button" onclick="setTagShape('rect')" id="btn-tshape-rect" class="p-2 rounded-lg border border-amber-500 bg-amber-500/20 text-white font-bold flex flex-col items-center gap-1 transition shadow">
+              <span class="text-xl leading-none text-amber-300">▭</span>
+              <span class="text-[10px]" id="txt-tshape-rect">角丸長方形</span>
+            </button>
+            <button type="button" onclick="setTagShape('capsule')" id="btn-tshape-capsule" class="p-2 rounded-lg border border-slate-700 bg-slate-900 hover:border-slate-500 text-slate-300 font-bold flex flex-col items-center gap-1 transition">
+              <span class="text-xl leading-none text-amber-300">⬭</span>
+              <span class="text-[10px]" id="txt-tshape-capsule">小判・カプセル</span>
+            </button>
+            <button type="button" onclick="setTagShape('hex')" id="btn-tshape-hex" class="p-2 rounded-lg border border-slate-700 bg-slate-900 hover:border-slate-500 text-slate-300 font-bold flex flex-col items-center gap-1 transition">
+              <span class="text-xl leading-none text-amber-300">⬡</span>
+              <span class="text-[10px]" id="txt-tshape-hex">六角・ホテルキー</span>
+            </button>
+            <button type="button" onclick="setTagShape('diamond')" id="btn-tshape-diamond" class="p-2 rounded-lg border border-slate-700 bg-slate-900 hover:border-slate-500 text-slate-300 font-bold flex flex-col items-center gap-1 transition">
+              <span class="text-xl leading-none text-amber-300">◇</span>
+              <span class="text-[10px]" id="txt-tshape-diamond">ひし形・ダイヤ</span>
+            </button>
+            <button type="button" onclick="setTagShape('round')" id="btn-tshape-round" class="p-2 rounded-lg border border-slate-700 bg-slate-900 hover:border-slate-500 text-slate-300 font-bold flex flex-col items-center gap-1 transition">
+              <span class="text-xl leading-none text-amber-300">〇</span>
+              <span class="text-[10px]" id="txt-tshape-round">丸型・サークル</span>
+            </button>
+            <button type="button" onclick="setTagShape('square')" id="btn-tshape-square" class="p-2 rounded-lg border border-slate-700 bg-slate-900 hover:border-slate-500 text-slate-300 font-bold flex flex-col items-center gap-1 transition">
+              <span class="text-xl leading-none text-amber-300">□</span>
+              <span class="text-[10px]" id="txt-tshape-square">角丸スクエア</span>
+            </button>
+          </div>
+          <input type="hidden" id="tag-shape" value="rect">
+        </div>
+
+        <!-- ② 外周の立体フチ（縁取りライン）設定 -->
+        <div class="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800 flex items-center justify-between">
+          <div>
+            <div class="text-[11px] font-bold text-white" id="lbl-tag-frame-title">外周の立体フチ（縁取りライン）</div>
+            <div class="text-[9px] text-slate-400" id="lbl-tag-frame-desc">ベースの輪郭にぴったり沿う2色目フレーム</div>
+          </div>
+          <select id="tag-frame" onchange="scheduleUpdate()" class="bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-amber-400 font-bold focus:outline-none">
+            <option id="opt-tgf-yes" value="yes">あり（立体フチ付・おすすめ）</option>
+            <option id="opt-tgf-no" value="no">なし（フチなし・フラット）</option>
+          </select>
+        </div>
+
+        <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] text-amber-300 font-bold mb-1" id="lbl-tag-pos">チェーン穴の位置</label>
+              <select id="tag-hole" onchange="scheduleUpdate()" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none">
+                <option id="opt-tgh-left" value="left">👈 左端リング突起（横長用）</option>
+                <option id="opt-tgh-top" value="top">☝️ 上部リング突起（縦・丸型用）</option>
+                <option id="opt-tgh-inside-left" value="inside-left">⭕ 左端内側穴（突起なし）</option>
+                <option id="opt-tgh-none" value="none">🚫 穴なし（ネームプレート）</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-300 mb-1" id="lbl-tag-dia">穴の直径 (mm)</label>
+              <input type="number" id="tag-hole-dia" value="4.5" min="2.0" max="7.5" step="0.5" onchange="scheduleUpdate()" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1 text-sm text-white">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 全モード共通：ワンポイント立体アイコン（スタンプ・16種） -->
+      <div class="bg-slate-950/60 p-3 rounded-lg border border-slate-800">
+        <div class="flex justify-between items-center mb-1.5">
+          <span class="text-xs font-bold text-slate-300" id="lbl-stamp-title">✨ 立体アイコン（スタンプ）</span>
+          <span class="text-[10px] text-amber-400 font-bold" id="lbl-stamp-current-name">選択中: なし</span>
+        </div>
+        <div class="grid grid-cols-6 sm:grid-cols-9 gap-1.5 text-center" id="box-stamp-buttons">
+          <button type="button" onclick="setStamp('none')" id="stamp-none" class="p-1.5 rounded border border-amber-500 bg-amber-500/20 text-xs font-bold col-span-2 sm:col-span-1">なし</button>
+          <button type="button" onclick="setStamp('paw')" id="stamp-paw" class="p-1.5 rounded border border-slate-800 bg-slate-900 hover:border-slate-600 text-sm" title="肉球">🐾</button>
+          <button type="button" onclick="setStamp('bone')" id="stamp-bone" class="p-1.5 rounded border border-slate-800 bg-slate-900 hover:border-slate-600 text-sm" title="ボーン">🦴</button>
+          <button type="button" onclick="setStamp('heart')" id="stamp-heart" class="p-1.5 rounded border border-slate-800 bg-slate-900 hover:border-slate-600 text-sm" title="ハート">♥</button>
+          <button type="button" onclick="setStamp('star')" id="stamp-star" class="p-1.5 rounded border border-slate-800 bg-slate-900 hover:border-slate-600 text-sm" title="スター">★</button>
+          <button type="button" onclick="setStamp('crown')" id="stamp-crown" class="p-1.5 rounded border border-slate-800 bg-slate-900 hover:border-slate-600 text-sm" title="王冠">👑</button>
+          <button type="button" onclick="setStamp('coffee')" id="stamp-coffee" class="p-1.5 rounded border border-slate-800 bg-slate-900 hover:border-slate-600 text-sm" title="カフェ">☕</button>
+          <button type="button" onclick="setStamp('wifi')" id="stamp-wifi" class="p-1.5 rounded border border-slate-800 bg-slate-900 hover:border-slate-600 text-sm" title="Wi-Fi">📶</button>
+          <button type="button" onclick="setStamp('clover')" id="stamp-clover" class="p-1.5 rounded border border-slate-800 bg-slate-900 hover:border-slate-600 text-sm" title="クローバー">🍀</button>
+          <button type="button" onclick="setStamp('music')" id="stamp-music" class="p-1.5 rounded border border-slate-800 bg-slate-900 hover:border-slate-600 text-sm" title="音符">♪</button>
+          <button type="button" onclick="setStamp('bell')" id="stamp-bell" class="p-1.5 rounded border border-slate-800 bg-slate-900 hover:border-slate-600 text-sm" title="ベル">🔔</button>
+          <button type="button" onclick="setStamp('fish')" id="stamp-fish" class="p-1.5 rounded border border-slate-800 bg-slate-900 hover:border-slate-600 text-sm" title="さかな">🐟</button>
+          <button type="button" onclick="setStamp('smile')" id="stamp-smile" class="p-1.5 rounded border border-slate-800 bg-slate-900 hover:border-slate-600 text-sm" title="スマイル">☺</button>
+          <button type="button" onclick="setStamp('sakura')" id="stamp-sakura" class="p-1.5 rounded border border-slate-800 bg-slate-900 hover:border-slate-600 text-sm" title="桜">🌸</button>
+          <button type="button" onclick="setStamp('torii')" id="stamp-torii" class="p-1.5 rounded border border-slate-800 bg-slate-900 hover:border-slate-600 text-sm" title="鳥居">⛩️</button>
+          <button type="button" onclick="setStamp('hotel')" id="stamp-hotel" class="p-1.5 rounded border border-slate-800 bg-slate-900 hover:border-slate-600 text-sm" title="キー">🗝️</button>
+          <button type="button" onclick="setStamp('cross')" id="stamp-cross" class="p-1.5 rounded border border-slate-800 bg-slate-900 hover:border-slate-600 text-sm" title="クロス">✚</button>
+        </div>
+      </div>
+
+      <!-- ② 書体・サイズ・厚み設定 -->
+      <div class="bg-slate-950/60 p-3.5 rounded-lg border border-slate-800 flex flex-col gap-3">
+        <div class="flex justify-between items-center">
+          <span class="text-xs font-bold text-slate-300" id="lbl-step2">② 書体・サイズ・色替え高さ設定</span>
+          <span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30 font-bold" id="lbl-badge-fast">⚡ 超高速描画</span>
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <label class="block text-[11px] text-slate-400" id="lbl-font">フォント（書体）選択（全13種・OFL商用フリー）</label>
+            <span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/30 font-bold" id="lbl-font-free-badge">✨ 全書体プレビュー無料</span>
+          </div>
+          <select id="font-family" onchange="onFontChanged()" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-white">
+            <optgroup id="optgrp-font-jp" label="── 日本語・看板・タグ向け ──">
+              <option id="opt-f-noto" value="'Noto Sans JP', sans-serif">極太ゴシック（視認性抜群・店舗・標識向け）</option>
+              <option id="opt-f-dela" value="'Dela Gothic One', sans-serif">昭和レトロ極太体（看板・キーホルダー定番）</option>
+              <option id="opt-f-mplus" value="'M PLUS Rounded 1c', sans-serif">ぽってり丸ゴシック（ペット・かわいい系）</option>
+              <option id="opt-f-pop" value="'Hachi Maru Pop', cursive">手書き風ポップ体（カフェ・かわいい迷子札）</option>
+              <option id="opt-f-reggae" value="'Reggae One', cursive">武骨ブロック体（ストリート・ゲーム風・ネームタグ）</option>
+            </optgroup>
+            <optgroup id="optgrp-font-trad" label="── 表札・和風・明朝・筆文字 ──">
+              <option id="opt-f-serif" value="'Noto Serif JP', serif">極太明朝体（高級感・表札・料亭）</option>
+              <option id="opt-f-kaisei" value="'Kaisei Tokumin', serif">特太江戸文字風（お祭り・看板・提灯風）</option>
+              <option id="opt-f-syuku" value="'Yuji Syuku', serif">毛筆草書体（表札・木札・神社仏閣）</option>
+              <option id="opt-f-boku" value="'Yuji Boku', serif">豪快毛筆行書（力強い和風表札）</option>
+              <option id="opt-f-zen" value="'Zen Antique', serif">アンティーク和風明朝（古民家・レトロ表札）</option>
+            </optgroup>
+            <optgroup id="optgrp-font-en" label="── 英数字・デザイン特化 ──">
+              <option id="opt-f-anton" value="'Anton', sans-serif">極太インパクト（RESERVED・STAFF ONLY）</option>
+              <option id="opt-f-blackops" value="'Black Ops One', cursive">ミリタリー・ステンシル（工具タグ・ガレージ）</option>
+              <option id="opt-f-russo" value="'Russo One', sans-serif">スポーティ極太（チームネーム・アウトドア）</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <!-- 🌟 文字サイズ（フォント倍率）変更スライダー -->
+        <div class="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800 flex flex-col gap-2">
+          <div>
+            <div class="flex justify-between items-center text-[11px] mb-1">
+              <span class="text-amber-300 font-bold" id="lbl-font-scale">🔠 文字サイズ調整</span>
+              <div class="flex items-center gap-2">
+                <span id="val-font-scale" class="font-mono text-amber-400 font-bold">100%</span>
+                <button type="button" onclick="resetFontScale()" id="btn-font-scale-reset" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded border border-slate-700 transition">標準に戻す</button>
+              </div>
+            </div>
+            <input type="range" id="font-scale" min="50" max="180" step="5" value="100" oninput="scheduleUpdate()" class="w-full accent-amber-500">
+          </div>
+          <input type="hidden" id="text-offset-x" value="0">
+          <input type="hidden" id="text-offset-y" value="0">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <div class="flex justify-between text-[11px] mb-1">
+              <span class="text-slate-400" id="lbl-size-w">横幅 (X)</span>
+              <span id="val-w" class="font-mono text-amber-400">80 mm</span>
+            </div>
+            <input type="range" id="size-w" min="30" max="150" step="2" value="80" oninput="scheduleUpdate()" class="w-full accent-amber-500">
+          </div>
+          <div>
+            <div class="flex justify-between text-[11px] mb-1">
+              <span class="text-slate-400" id="lbl-size-h">縦幅 (Y)</span>
+              <span id="val-h" class="font-mono text-amber-400">95 mm</span>
+            </div>
+            <input type="range" id="size-h" min="20" max="150" step="2" value="95" oninput="scheduleUpdate()" class="w-full accent-amber-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 pt-1 border-t border-slate-800/80">
+          <div>
+            <div class="flex justify-between text-[11px] mb-1">
+              <span class="text-slate-400" id="lbl-thick-base">土台厚み (1色目)</span>
+              <span id="val-base" class="font-mono text-white">2.0 mm</span>
+            </div>
+            <input type="range" id="thick-base" min="1.2" max="5.0" step="0.2" value="2.0" oninput="scheduleUpdate()" class="w-full accent-amber-500">
+          </div>
+          <div>
+            <div class="flex justify-between text-[11px] mb-1">
+              <span class="text-slate-400" id="lbl-thick-top">文字・枠の高さ (2色目)</span>
+              <span id="val-top" class="font-mono text-white">1.2 mm</span>
+            </div>
+            <input type="range" id="thick-top" min="0.4" max="3.0" step="0.2" value="1.2" oninput="scheduleUpdate()" class="w-full accent-amber-500">
+          </div>
+        </div>
+
+        <!-- 2色カラーピッカー -->
+        <div class="flex items-center gap-3 pt-1">
+          <div class="flex items-center gap-2 flex-1 bg-slate-900 p-1.5 rounded border border-slate-800">
+            <input type="color" id="col-base" value="#f8fafc" oninput="updateMaterialColors()" class="w-6 h-6 rounded cursor-pointer bg-transparent border-0">
+            <span class="text-[11px] text-slate-300" id="lbl-col-base">土台カラー</span>
+          </div>
+          <div class="flex items-center gap-2 flex-1 bg-slate-900 p-1.5 rounded border border-slate-800">
+            <input type="color" id="col-top" value="#0f172a" oninput="updateMaterialColors()" class="w-6 h-6 rounded cursor-pointer bg-transparent border-0">
+            <span class="text-[11px] text-slate-300" id="lbl-col-top">文字・凸カラー</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ③ 3MF / STL出力ボタン群 -->
+      <div class="flex flex-col gap-2 pt-1">
+        <button onclick="openExportModal('3mf')" id="btn-export-3mf" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-extrabold py-3 px-4 rounded-lg shadow-lg transition flex items-center justify-center gap-2 text-sm">
+          🎨 2色カラー付 3MFで出力（Bambu Studio等推奨）
+        </button>
+        <button onclick="openExportModal('merged')" id="btn-export-merged" class="w-full bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold py-2 px-3 rounded-lg border border-amber-500/40 transition flex items-center justify-center gap-2 text-xs">
+          📥 一体型STLをダウンロード（単色プリンター用）
+        </button>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="openExportModal('base')" id="btn-export-base" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold py-2 px-2 rounded border border-slate-700 transition">
+            🧩 土台のみSTL (マルチ色用)
+          </button>
+          <button onclick="openExportModal('top')" id="btn-export-top" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold py-2 px-2 rounded border border-slate-700 transition">
+            🧩 文字・凸のみSTL (マルチ色用)
+          </button>
+        </div>
+        <button onclick="copyShareLink()" id="btn-share" class="w-full bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-white text-xs py-2 rounded border border-slate-800 transition mt-1">
+          🔗 現在のデザインをURLで保存（スマホ➔PC引き継ぎ用）
+        </button>
+      </div>
+
+      <!-- 商用利用ライセンス・免責事項案内（常時確認用アコーディオン） -->
+      <details open class="text-[11px] text-slate-300 bg-slate-950/70 border border-slate-800 rounded-lg p-3 mt-1">
+        <summary class="cursor-pointer hover:text-amber-300 font-bold text-amber-400" id="lbl-side-license-title">【商用利用ライセンス・免責事項について】</summary>
+        <div class="mt-2 space-y-1.5 leading-relaxed text-[11px] text-slate-300">
+          <p id="lbl-side-license-ticket"><strong>・チケット購入（個人プラン）：</strong>ご自身のペット用やギフトなど、個人利用の範囲でご利用いただけます。</p>
+          <p id="lbl-side-license-pro"><strong>・PROプラン（商用ライセンス付）：</strong>ご契約期間中、本ツールで生成・3Dプリントした<strong>「物理的な造形物（実物の迷子札・看板・キーホルダー等）」を、メルカリ・BASE・Etsy・実店舗などで自由に販売</strong>していただけます。（※出力したSTL/3MFデジタルデータそのものの転売・再配布は禁止です）</p>
+          <p class="text-[10px] text-emerald-400 pt-1 border-t border-slate-800/80" id="lbl-side-license-font">✅ 搭載されている全13種のフォントはすべて「SIL Open Font License (OFL)＝商用利用・プリント販売完全無料」のため、著作権の心配なく安心して販売いただけます。</p>
+          <p class="text-[10px] text-slate-400 pt-1 border-t border-slate-800/80" id="lbl-side-license-disclaimer">※免責事項：本ツールで生成されたデータに基づく3Dプリント造形物の強度、耐久性、誤飲事故等の損害について当サービスは責任を負いません。適切なフィラメント（PETG/PLA等）をお選びください。</p>
+        </div>
+      </details>
+
+      <!-- SEO・検索集客用アコーディオン -->
+      <details class="text-[11px] text-slate-500 border-t border-slate-800 pt-3 mt-1">
+        <summary class="cursor-pointer hover:text-slate-400 font-bold" id="lbl-seo-summary">📖 3Dプリンターでの綺麗な2色印刷のコツ（SEO案内）</summary>
+        <div class="mt-2 space-y-1.5 leading-relaxed">
+          <p id="lbl-seo-p1"><strong>・単色3Dプリンターの場合：</strong>「一体型STL」をダウンロードし、スライサー（Bambu Studio / Cura / PrusaSlicer等）で土台厚み（例：2.0mm）の次のレイヤーに「一時停止（Pause）またはフィラメント変更」を設定すると、手動で簡単に2色看板が作れます。</p>
+          <p id="lbl-seo-p2"><strong>・AMS等のマルチカラー機の場合：</strong>「土台のみSTL」と「文字・凸のみSTL」の2つをダウンロードし、スライサーに2つ同時にドラッグ＆ドロップして「1つのオブジェクトとして結合」を選ぶと、パーツごとに1クリックで色分け印刷が可能です。</p>
+          <p>Keywords: 3Dプリンター 看板 作成, QRコード STL 変換, 千社札 3Dモデル, 名入れキーホルダー STL ジェネレーター, Custom 3D Sign Maker, Japanese Kanji Nameplate STL.</p>
+        </div>
+      </details>
+
+    </div>
+  </div>
+
+  <!-- 課金・ダウンロード・ライセンスモーダル -->
+  <div id="export-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-700 rounded-xl max-w-lg w-full p-5 shadow-2xl my-auto max-h-[94vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-3">
+        <div class="flex items-center gap-2">
+          <span class="bg-amber-500/20 text-amber-400 text-xs font-bold px-2.5 py-1 rounded border border-amber-500/30" id="lbl-modal-badge">3MF / STL データ出力＆プラン選択</span>
+          <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700" id="lbl-modal-current-status">現在：お試し(Free)</span>
+        </div>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white text-lg px-1">✕</button>
+      </div>
+
+      <h3 class="text-base font-bold mb-1" id="lbl-modal-title">料金プランの選択・データ書き出し</h3>
+      <p class="text-[11px] text-slate-400 mb-3" id="lbl-modal-desc">生成された3MF/STLデータはすべてのスライサーソフト（Bambu Studio、PrusaSlicer、OrcaSlicer、Cura等）にそのまま読み込めます。</p>
+
+      <!-- 3プラン一覧カード -->
+      <div class="space-y-2.5 mb-3.5">
+        <!-- ① お試し（Free） -->
+        <div id="card-plan-free" onclick="selectPlanForTest('free')" class="p-3 rounded-lg border border-slate-700 bg-slate-950/80 hover:border-slate-500 cursor-pointer transition flex justify-between items-center gap-2">
+          <div>
+            <div class="font-bold text-xs text-slate-200" id="lbl-modal-p0-title">🎁 無料体験（Free）：0円</div>
+            <div class="text-[11px] text-slate-400 mt-0.5" id="lbl-modal-p0-desc">自由な文字・名前入力、全13書体、3D回転プレビュー、色替え体験まで完全無料（※3MF・STLデータの保存・書き出しのみチケットまたはPROが必要です）</div>
+          </div>
+          <div class="text-right whitespace-nowrap ml-2">
+            <span class="font-extrabold text-sm text-emerald-400" id="lbl-modal-p0-price">0円（完全無料）</span>
+          </div>
+        </div>
+
+        <!-- ② 個人向け：5回デザインチケット -->
+        <div id="card-plan-ticket" onclick="handleSelectTicketPlan()" class="p-3.5 rounded-lg border-2 border-sky-500/70 bg-sky-500/10 hover:bg-sky-500/20 cursor-pointer transition flex justify-between items-center gap-2 relative">
+          <span class="absolute -top-2.5 left-3 bg-sky-500 text-slate-950 text-[10px] font-extrabold px-2 py-0.5 rounded shadow" id="lbl-modal-p1-badge">個人向け・1デザインあたり100円（ワンコイン）</span>
+          <div class="mt-1">
+            <div class="font-bold text-sm text-sky-300" id="lbl-modal-p1-title">🎫 カスタム作成 5回チケット（5回デザインチケット）</div>
+            <div class="text-[11px] text-slate-200 mt-0.5" id="lbl-modal-p1-desc">作成したオリジナル3Dデータ（3MF/STL）を5回分ダウンロード書き出し（お好きな文字・QRで5デザイン作成可能）</div>
+          </div>
+          <div class="text-right whitespace-nowrap ml-2">
+            <div class="font-extrabold text-base text-sky-300">¥500</div>
+            <div class="text-[10px] text-slate-300">($3.49)</div>
+          </div>
+        </div>
+
+        <!-- ③ 商用・プロ向け：PRO作り放題プラン -->
+        <div id="card-plan-pro" onclick="handleSelectProPlan()" class="p-3.5 rounded-lg border-2 border-amber-500 bg-amber-500/10 hover:bg-amber-500/20 cursor-pointer transition flex justify-between items-center gap-2 relative">
+          <span class="absolute -top-2.5 right-3 bg-amber-500 text-slate-950 text-[10px] font-extrabold px-2 py-0.5 rounded shadow" id="lbl-modal-p2-pop">商用・プロ向け｜一番人気・実物の販売OK</span>
+          <div class="mt-1">
+            <div class="font-bold text-sm text-amber-300" id="lbl-modal-p2-title">👑 PRO作り放題プラン（商用ライセンス付）</div>
+            <div class="text-[11px] text-slate-200 mt-0.5" id="lbl-modal-p2-desc">3MF/STLデータのダウンロード出力が無制限 ＋ 実物の3Dプリント造形物をメルカリ・BASE・Etsy等で自由に販売OK</div>
+          </div>
+          <div class="text-right whitespace-nowrap ml-2">
+            <div class="font-extrabold text-base text-amber-300">¥2,700<span class="text-[10px] font-normal text-slate-200" id="lbl-modal-p2-unit">/月</span></div>
+            <div class="text-[10px] text-slate-300">($17.99/mo)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 商用利用ライセンス ＆ デジタル商品返金ポリシー ＆ 免責条項 -->
+      <div class="bg-slate-950/90 border border-slate-800 rounded-lg p-3 mb-3.5 text-[11px] leading-relaxed space-y-1.5">
+        <div class="font-bold text-amber-400" id="lbl-modal-lic-title">【商用利用ライセンス・返金ポリシーについて】</div>
+        <p class="text-slate-300" id="lbl-modal-lic-ticket"><strong>・チケット購入（個人プラン）：</strong>ご自身のペット用やギフトなど、個人利用の範囲でご利用いただけます。</p>
+        <p class="text-slate-300" id="lbl-modal-lic-pro"><strong>・PROプラン（商用ライセンス付）：</strong>ご契約期間中、本ツールで生成・3Dプリントした<strong>「物理的な造形物（実物の迷子札・看板・キーホルダー等）」を、メルカリ・BASE・Etsy・実店舗などで自由に販売</strong>していただけます。（※出力したSTL/3MFデジタルデータそのものの転売・再配布は禁止です）</p>
+        <p class="text-rose-300 pt-1 border-t border-slate-800/80" id="lbl-modal-lic-refund"><strong>※返金ポリシー：</strong>デジタルデータの性質上、決済完了後のキャンセル・返金は対応いたしかねます。必ず無料3Dプレビューで文字や形状をご確認の上ご購入ください。</p>
+        <p class="text-slate-400 text-[10px]" id="lbl-modal-lic-disclaimer"><strong>※造形物に関する免責条項：</strong>本ツールで生成されたデータに基づく3Dプリント造形物の強度、耐久性、誤飲事故、首輪の破損等の損害について、当サービスは一切の責任を負いません。材質（PETG/PLA等）やインフィル設定の選定はユーザー自身の責任において行ってください。</p>
+        <p class="text-slate-400 text-[10px]" id="lbl-modal-lic-cache-note">※ブラウザの履歴やキャッシュを削除すると購入回数がリセットされる場合があります。万が一消えた場合は注文番号を添えてお問い合わせください（再発行いたします）。</p>
+      </div>
+
+      <!-- パスコード（シリアルコード）入力欄 -->
+      <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-2.5 mb-2.5 flex items-center gap-2">
+        <span class="text-[11px] text-slate-400 whitespace-nowrap font-bold" id="lbl-passcode-label">🔑 パスコード入力:</span>
+        <input type="text" id="pro-passcode-input" placeholder="シリアルコードを入力" class="flex-1 bg-slate-900 border border-slate-700 rounded px-2.5 py-1 text-xs text-white focus:border-amber-500 outline-none">
+        <button type="button" onclick="applyPasscode()" id="btn-passcode-apply" class="bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40 text-xs font-bold px-3 py-1 rounded transition whitespace-nowrap">適用</button>
+      </div>
+
+      <!-- ダウンロード実行ボタン（プラン状態に応じて自動変化） -->
+      <button onclick="executeDownload()" id="lbl-modal-btn-download" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold py-3 px-3 rounded-lg shadow-lg transition text-xs sm:text-sm mb-2">
+        📥 データをダウンロード
+      </button>
+      <p class="text-[10px] text-center text-slate-400" id="lbl-modal-note">💡 現在は体感テストモードのため、上の3つのプランカードをクリックすると即座に「お試し(0円)」「5回チケット」「PRO作り放題」を切り替えて体感できます</p>
+    </div>
+  </div>
+
+  <script>
+    // Stripe決済リンク設定（本番公開時にStripeのURLを入れるだけで即決済連動、空欄時は1クリックで体感テスト可能）
+    const STRIPE_TICKET_URL = '';
+    const STRIPE_PRO_URL = '';
+
+    let scene, camera, renderer, controls;
+    let baseGroup, topGroup, fullGroup;
+    let baseMat, topMat, standMat;
+    let currentMode = 'qr';
+    let currentStamp = 'none';
+    let pendingExportType = 'merged';
+    let updateTimer = null;
+    let isEnglish = false;
+    let isFlipped = false;
+    let planTier = 'free'; // 'free' | 'ticket' | 'pro'
+    let ticketRemaining = 0;
+    let isProUser = false;
+    let bedMesh = null;
+
+    function init() {
+      const container = document.getElementById('canvas-container');
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x070b14);
+
+      camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 1, 1200);
+      camera.up.set(0, 1, 0);
+      camera.position.set(0, -20, 125);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(renderer.domElement);
+
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.target.set(0, 0, 0);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.08;
+      controls.update();
+
+      scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+      const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.85);
+      dirLight1.position.set(60, -80, 120);
+      scene.add(dirLight1);
+      const dirLight2 = new THREE.DirectionalLight(0x94a3b8, 0.4);
+      dirLight2.position.set(-60, 80, 60);
+      scene.add(dirLight2);
+
+      createBuildPlate();
+
+      baseMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.35, metalness: 0.05, side: THREE.DoubleSide });
+      topMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.25, metalness: 0.1, side: THREE.DoubleSide });
+      standMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.3, metalness: 0.15, side: THREE.DoubleSide });
+
+      fullGroup = new THREE.Group();
+      baseGroup = new THREE.Group();
+      topGroup = new THREE.Group();
+      fullGroup.add(baseGroup);
+      fullGroup.add(topGroup);
+      scene.add(fullGroup);
+
+      // 直前に選択していたモード・形状・プラン状態を復元
+      try {
+        const validPetShapes = ['round', 'diamond', 'square', 'rect', 'capsule', 'hex'];
+        const savedShape = sessionStorage.getItem('3d_studio_pet_shape');
+        if (document.getElementById('pet-shape')) {
+          document.getElementById('pet-shape').value = validPetShapes.includes(savedShape) ? savedShape : 'round';
+        }
+        const savedTagShape = sessionStorage.getItem('3d_studio_tag_shape');
+        if (document.getElementById('tag-shape')) {
+          document.getElementById('tag-shape').value = validPetShapes.includes(savedTagShape) ? savedTagShape : 'rect';
+        }
+        const savedMode = sessionStorage.getItem('3d_studio_mode') || 'pet';
+        if (['qr', 'jp', 'pet', 'tag'].includes(savedMode)) {
+          switchMode(savedMode);
+        }
+        const savedTier = localStorage.getItem('3d_studio_plan_tier') || sessionStorage.getItem('3d_studio_plan_tier') || 'free';
+        const savedTickets = parseInt(localStorage.getItem('3d_studio_ticket_count') || sessionStorage.getItem('3d_studio_ticket_count') || '0', 10);
+        ticketRemaining = isNaN(savedTickets) ? 0 : Math.max(0, savedTickets);
+        if (savedTier === 'pro') {
+          planTier = 'pro';
+        } else if (savedTier === 'ticket' && ticketRemaining > 0) {
+          planTier = 'ticket';
+        } else {
+          planTier = 'free';
+        }
+        // Stripe決済完了後のリダイレクトURLパラメータ自動解放 (?unlock=ticket5 または ?unlock=pro2026)
+        const urlParams = new URLSearchParams(window.location.search);
+        const unlockCode = (urlParams.get('unlock') || '').toLowerCase();
+        let shouldCleanUrl = false;
+        if (unlockCode === 'pro2026' || unlockCode === 'pro') {
+          planTier = 'pro';
+          savePlanState();
+          shouldCleanUrl = true;
+        } else if (unlockCode === 'ticket5' || unlockCode === 'ticket') {
+          planTier = 'ticket';
+          ticketRemaining = Math.max(ticketRemaining, 0) + 5;
+          savePlanState();
+          shouldCleanUrl = true;
+        }
+        // 🛡️ URL使い回し・ブックマークによる無限チャージ防止（アドレスバーから即座にクエリを消去）
+        if (shouldCleanUrl && window.history && window.history.replaceState) {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      } catch (e) {}
+      applyProPlanUI();
+
+      loadParamsFromURL();
+      setupTextMouseDrag(renderer.domElement);
+      window.addEventListener('resize', onResize);
+
+      document.fonts.ready.then(() => {
+        build3DModel();
+      });
+      animate();
+    }
+
+    function createBuildPlate() {
+      const plateSize = 220;
+      const plateGeo = new THREE.PlaneGeometry(plateSize, plateSize);
+      // 裏側から覗き込んだ時にも邪魔にならないよう FrontSide のみ描画
+      const plateMat = new THREE.MeshBasicMaterial({ color: 0x0f172a, side: THREE.FrontSide });
+      bedMesh = new THREE.Mesh(plateGeo, plateMat);
+      bedMesh.position.z = -0.05;
+      scene.add(bedMesh);
+
+      const grid = new THREE.GridHelper(plateSize, 22, 0x475569, 0x1e293b);
+      grid.rotation.x = Math.PI / 2;
+      grid.position.z = 0;
+      scene.add(grid);
+
+      const edges = new THREE.EdgesGeometry(plateGeo);
+      const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xf59e0b, linewidth: 2 }));
+      line.position.z = 0.1;
+      scene.add(line);
+    }
+
+    // 🌟 書体ごとの正規ウェイト判定（文字が変わらない不具合の根本解消）
+    function getFontWeight(font) {
+      if (font.includes('Noto Sans JP') || font.includes('Noto Serif JP')) return '900';
+      if (font.includes('M PLUS Rounded 1c') || font.includes('Kaisei Tokumin')) return '800';
+      return 'normal'; // Dela Gothic, Yuji, Hachi Maru Pop, Reggae One, Anton, Russo One等は400(normal)
+    }
+
+    // 🌟 フォントの確実な非同期ロード待機
+    async function ensureFontLoaded(font) {
+      const fw = getFontWeight(font);
+      try {
+        await document.fonts.load(`${fw} 32px ${font}`);
+      } catch (e) {}
+    }
+
+    async function onFontChanged() {
+      const font = document.getElementById('font-family').value;
+      await ensureFontLoaded(font);
+      build3DModel();
+    }
+
+    function scheduleUpdate() {
+      if (updateTimer) clearTimeout(updateTimer);
+      updateTimer = setTimeout(async () => {
+        const font = document.getElementById('font-family').value;
+        await ensureFontLoaded(font);
+        build3DModel();
+      }, 80);
+    }
+
+    const VALID_PET_SHAPES = ['round', 'diamond', 'square', 'rect', 'capsule', 'hex'];
+
+    // 🌟 ペットプレート形状切替UI（〇・◇・□・▭・⬭・⬡のシンプル幾何学形状）
+    function setPetShape(shape) {
+      if (updateTimer) clearTimeout(updateTimer);
+      currentMode = 'pet';
+      const validShape = VALID_PET_SHAPES.includes(shape) ? shape : 'round';
+      const sel = document.getElementById('pet-shape');
+      if (sel) sel.value = validShape;
+      try { sessionStorage.setItem('3d_studio_pet_shape', validShape); } catch (e) {}
+      onPetShapeSelectChanged();
+    }
+
+    function onPetShapeSelectChanged() {
+      if (updateTimer) clearTimeout(updateTimer);
+      const sel = document.getElementById('pet-shape');
+      let shape = sel ? sel.value : 'round';
+      if (!VALID_PET_SHAPES.includes(shape)) {
+        shape = 'round';
+        if (sel) sel.value = 'round';
+      }
+      try { sessionStorage.setItem('3d_studio_pet_shape', shape); } catch (e) {}
+      VALID_PET_SHAPES.forEach(s => {
+        const btn = document.getElementById('btn-shape-' + s);
+        if (btn) {
+          if (s === shape) {
+            btn.className = 'p-2 rounded-lg border border-amber-500 bg-amber-500/20 text-white font-bold flex flex-col items-center gap-1 transition shadow';
+          } else {
+            btn.className = 'p-2 rounded-lg border border-slate-700 bg-slate-900 hover:border-slate-500 text-slate-300 font-bold flex flex-col items-center gap-1 transition';
+          }
+        }
+      });
+
+      // 各形状のおすすめ黄金比サイズを自動プリセット
+      const wEl = document.getElementById('size-w');
+      const hEl = document.getElementById('size-h');
+      const petHoleEl = document.getElementById('pet-hole-pos');
+      if (shape === 'round') { wEl.value = 44; hEl.value = 44; if (petHoleEl) petHoleEl.value = 'top'; }
+      else if (shape === 'diamond') { wEl.value = 48; hEl.value = 48; if (petHoleEl) petHoleEl.value = 'top'; }
+      else if (shape === 'square') { wEl.value = 44; hEl.value = 44; if (petHoleEl) petHoleEl.value = 'top'; }
+      else if (shape === 'rect') { wEl.value = 56; hEl.value = 32; }
+      else if (shape === 'capsule') { wEl.value = 58; hEl.value = 32; }
+      else if (shape === 'hex') { wEl.value = 46; hEl.value = 48; }
+
+      build3DModel();
+    }
+
+    function togglePetShapeUI() {
+      onPetShapeSelectChanged();
+    }
+
+    // 🌟 ネームタグ形状切替UI（▭・⬭・⬡・◇・〇・□の6種）
+    function setTagShape(shape) {
+      if (updateTimer) clearTimeout(updateTimer);
+      currentMode = 'tag';
+      const validShape = VALID_PET_SHAPES.includes(shape) ? shape : 'rect';
+      const sel = document.getElementById('tag-shape');
+      if (sel) sel.value = validShape;
+      try { sessionStorage.setItem('3d_studio_tag_shape', validShape); } catch (e) {}
+      onTagShapeSelectChanged();
+    }
+
+    function onTagShapeSelectChanged() {
+      if (updateTimer) clearTimeout(updateTimer);
+      const sel = document.getElementById('tag-shape');
+      let shape = sel ? sel.value : 'rect';
+      if (!VALID_PET_SHAPES.includes(shape)) {
+        shape = 'rect';
+        if (sel) sel.value = 'rect';
+      }
+      try { sessionStorage.setItem('3d_studio_tag_shape', shape); } catch (e) {}
+      VALID_PET_SHAPES.forEach(s => {
+        const btn = document.getElementById('btn-tshape-' + s);
+        if (btn) {
+          if (s === shape) {
+            btn.className = 'p-2 rounded-lg border border-amber-500 bg-amber-500/20 text-white font-bold flex flex-col items-center gap-1 transition shadow';
+          } else {
+            btn.className = 'p-2 rounded-lg border border-slate-700 bg-slate-900 hover:border-slate-500 text-slate-300 font-bold flex flex-col items-center gap-1 transition';
+          }
+        }
+      });
+
+      const wEl = document.getElementById('size-w');
+      const hEl = document.getElementById('size-h');
+      const holeEl = document.getElementById('tag-hole');
+      if (shape === 'rect') { wEl.value = 76; hEl.value = 28; if (holeEl) holeEl.value = 'left'; }
+      else if (shape === 'capsule') { wEl.value = 78; hEl.value = 28; if (holeEl) holeEl.value = 'left'; }
+      else if (shape === 'hex') { wEl.value = 80; hEl.value = 32; if (holeEl) holeEl.value = 'left'; }
+      else if (shape === 'diamond') { wEl.value = 48; hEl.value = 48; if (holeEl) holeEl.value = 'top'; }
+      else if (shape === 'round') { wEl.value = 48; hEl.value = 48; if (holeEl) holeEl.value = 'top'; }
+      else if (shape === 'square') { wEl.value = 48; hEl.value = 48; if (holeEl) holeEl.value = 'top'; }
+
+      build3DModel();
+    }
+
+    // 互換性ラッパー（全カテゴリー共通の setStamp に委譲）
+    function setPetDeco(deco) {
+      setStamp(deco);
+    }
+
+    // 🌟 迷子札（裏面エングレーブ/エンボス）トグル（ONにした瞬間に自動で裏面を表示）
+    function togglePetReverseUI() {
+      const isRev = document.getElementById('pet-reverse-enable').checked;
+      const backBox = document.getElementById('box-pet-reverse');
+      const flipBtn = document.getElementById('btn-flip');
+      if (isRev) {
+        backBox.classList.remove('hidden');
+        backBox.classList.add('flex');
+        if (currentMode === 'pet') {
+          flipBtn.classList.remove('hidden');
+          isFlipped = true;
+        }
+      } else {
+        backBox.classList.add('hidden');
+        backBox.classList.remove('flex');
+        if (currentMode === 'pet') {
+          flipBtn.classList.add('hidden');
+          isFlipped = false;
+        }
+      }
+      build3DModel();
+    }
+
+    // 🌟 QRあり/なしトグルUI
+    function toggleQrEnableUI() {
+      const isQr = document.getElementById('qr-enable').value === 'yes';
+      const boxQrUrl = document.getElementById('box-qr-url');
+      const lblTop = document.getElementById('lbl-qr-top');
+      const lblBot = document.getElementById('lbl-qr-bot');
+
+      if (isQr) {
+        boxQrUrl.classList.remove('hidden');
+        lblTop.innerText = isEnglish ? 'Top Text (Main Text)' : '上部テキスト（メイン文字）';
+        lblBot.innerText = isEnglish ? 'Bottom Text (Sub Text)' : '下部テキスト（サブ文字）';
+      } else {
+        boxQrUrl.classList.add('hidden');
+        lblTop.innerText = isEnglish ? 'Main Text (Large)' : 'メイン文字（大）';
+        lblBot.innerText = isEnglish ? 'Sub Text (Optional)' : 'サブ文字（小・任意）';
+      }
+      build3DModel();
+    }
+
+    // 🌟 店舗用クイックプリセット
+    function setShopPreset(type) {
+      if (type === 'reserved') {
+        document.getElementById('qr-enable').value = 'no';
+        document.getElementById('qr-top-text').value = 'RESERVED';
+        document.getElementById('qr-bottom-text').value = isEnglish ? 'TABLE RESERVED' : 'ご予約席';
+        document.getElementById('size-w').value = 95;
+        document.getElementById('size-h').value = 50;
+        document.getElementById('col-base').value = '#0f172a';
+        document.getElementById('col-top').value = '#f59e0b';
+        document.getElementById('stand-type').value = 'stand';
+        setStamp('none');
+      } else if (type === 'staff') {
+        document.getElementById('qr-enable').value = 'no';
+        document.getElementById('qr-top-text').value = 'STAFF ONLY';
+        document.getElementById('qr-bottom-text').value = isEnglish ? 'AUTHORIZED PERSONNEL' : '関係者以外立入禁止';
+        document.getElementById('size-w').value = 90;
+        document.getElementById('size-h').value = 45;
+        document.getElementById('col-base').value = '#fee2e2';
+        document.getElementById('col-top').value = '#dc2626';
+        document.getElementById('stand-type').value = 'flat';
+        setStamp('none');
+      } else if (type === 'wifi') {
+        document.getElementById('qr-enable').value = 'yes';
+        document.getElementById('qr-top-text').value = 'FREE Wi-Fi';
+        document.getElementById('qr-bottom-text').value = 'PW: cafe-guest123';
+        document.getElementById('qr-url').value = 'WIFI:S:Cafe_WiFi;T:WPA;P:cafe-guest123;;';
+        document.getElementById('size-w').value = 80;
+        document.getElementById('size-h').value = 95;
+        document.getElementById('col-base').value = '#f8fafc';
+        document.getElementById('col-top').value = '#0f172a';
+        document.getElementById('stand-type').value = 'stand';
+        setStamp('wifi');
+      } else if (type === 'insta') {
+        document.getElementById('qr-enable').value = 'yes';
+        document.getElementById('qr-top-text').value = 'FOLLOW US';
+        document.getElementById('qr-bottom-text').value = '@my_shop_official';
+        document.getElementById('qr-url').value = 'https://instagram.com';
+        document.getElementById('size-w').value = 80;
+        document.getElementById('size-h').value = 95;
+        document.getElementById('col-base').value = '#0f172a';
+        document.getElementById('col-top').value = '#f43f5e';
+        document.getElementById('stand-type').value = 'stand';
+        setStamp('none');
+      }
+      toggleQrEnableUI();
+      updateMaterialColors();
+      build3DModel();
+    }
+
+    async function switchMode(mode) {
+      currentMode = mode;
+      try { sessionStorage.setItem('3d_studio_mode', mode); } catch (e) {}
+      ['qr', 'jp', 'pet', 'tag'].forEach(m => {
+        document.getElementById('panel-' + m).className = (m === mode) ? 'flex flex-col gap-3 bg-slate-950/60 p-3.5 rounded-lg border border-slate-800' : 'hidden';
+        document.getElementById('tab-' + m).className = (m === mode)
+          ? 'py-2 px-1 font-bold rounded-md bg-amber-500 text-slate-950 transition text-center'
+          : 'py-2 px-1 font-bold rounded-md text-slate-300 hover:bg-slate-800 transition text-center';
+      });
+
+      const signStandBox = document.getElementById('box-sign-stand');
+      const standViewBtn = document.getElementById('btn-stand-view');
+      const flipBtn = document.getElementById('btn-flip');
+
+      if (mode === 'qr' || mode === 'jp') {
+        signStandBox.classList.remove('hidden');
+        standViewBtn.classList.remove('hidden');
+      } else {
+        signStandBox.classList.add('hidden');
+        standViewBtn.classList.add('hidden');
+      }
+
+      if ((mode === 'jp' && document.getElementById('jp-reversible').checked) ||
+          (mode === 'pet' && document.getElementById('pet-reverse-enable') && document.getElementById('pet-reverse-enable').checked)) {
+        flipBtn.classList.remove('hidden');
+      } else {
+        flipBtn.classList.add('hidden');
+        isFlipped = false;
+      }
+
+      if (mode === 'qr') {
+        document.getElementById('size-w').value = 80;
+        document.getElementById('size-h').value = 95;
+        document.getElementById('col-base').value = '#f8fafc';
+        document.getElementById('col-top').value = '#0f172a';
+        document.getElementById('stand-type').value = 'stand';
+      } else if (mode === 'jp') {
+        const dir = document.getElementById('jp-dir').value;
+        document.getElementById('size-w').value = dir === 'vertical' ? 52 : 120;
+        document.getElementById('size-h').value = dir === 'vertical' ? 125 : 55;
+        document.getElementById('col-base').value = '#1e293b';
+        document.getElementById('col-top').value = '#f8fafc';
+        document.getElementById('stand-type').value = 'flat';
+      } else if (mode === 'pet') {
+        const sel = document.getElementById('pet-shape');
+        let petShape = sel ? sel.value : 'round';
+        if (!VALID_PET_SHAPES.includes(petShape)) {
+          petShape = 'round';
+          if (sel) sel.value = 'round';
+        }
+        VALID_PET_SHAPES.forEach(s => {
+          const btn = document.getElementById('btn-shape-' + s);
+          if (btn) {
+            btn.className = (s === petShape)
+              ? 'p-2 rounded-lg border border-amber-500 bg-amber-500/20 text-white font-bold flex flex-col items-center gap-1 transition shadow'
+              : 'p-2 rounded-lg border border-slate-700 bg-slate-900 hover:border-slate-500 text-slate-300 font-bold flex flex-col items-center gap-1 transition';
+          }
+        });
+        if (petShape === 'round') { document.getElementById('size-w').value = 44; document.getElementById('size-h').value = 44; }
+        else if (petShape === 'diamond') { document.getElementById('size-w').value = 48; document.getElementById('size-h').value = 48; }
+        else if (petShape === 'square') { document.getElementById('size-w').value = 44; document.getElementById('size-h').value = 44; }
+        else if (petShape === 'rect') { document.getElementById('size-w').value = 56; document.getElementById('size-h').value = 32; }
+        else if (petShape === 'capsule') { document.getElementById('size-w').value = 58; document.getElementById('size-h').value = 32; }
+        else if (petShape === 'hex') { document.getElementById('size-w').value = 46; document.getElementById('size-h').value = 48; }
+
+        // パステル＆アクセント2トーン配色（AMS最適化）
+        document.getElementById('col-base').value = '#fce7f3';
+        document.getElementById('col-top').value = '#be185d';
+        document.getElementById('thick-base').value = 2.0;
+        document.getElementById('thick-top').value = 1.0;
+      } else if (mode === 'tag') {
+        const tSel = document.getElementById('tag-shape');
+        let tagShape = tSel ? tSel.value : 'rect';
+        if (!VALID_PET_SHAPES.includes(tagShape)) {
+          tagShape = 'rect';
+          if (tSel) tSel.value = 'rect';
+        }
+        VALID_PET_SHAPES.forEach(s => {
+          const btn = document.getElementById('btn-tshape-' + s);
+          if (btn) {
+            btn.className = (s === tagShape)
+              ? 'p-2 rounded-lg border border-amber-500 bg-amber-500/20 text-white font-bold flex flex-col items-center gap-1 transition shadow'
+              : 'p-2 rounded-lg border border-slate-700 bg-slate-900 hover:border-slate-500 text-slate-300 font-bold flex flex-col items-center gap-1 transition';
+          }
+        });
+        const holeEl = document.getElementById('tag-hole');
+        if (tagShape === 'rect') { document.getElementById('size-w').value = 76; document.getElementById('size-h').value = 28; if (holeEl) holeEl.value = 'left'; }
+        else if (tagShape === 'capsule') { document.getElementById('size-w').value = 78; document.getElementById('size-h').value = 28; if (holeEl) holeEl.value = 'left'; }
+        else if (tagShape === 'hex') { document.getElementById('size-w').value = 80; document.getElementById('size-h').value = 32; if (holeEl) holeEl.value = 'left'; }
+        else if (tagShape === 'diamond') { document.getElementById('size-w').value = 48; document.getElementById('size-h').value = 48; if (holeEl) holeEl.value = 'top'; }
+        else if (tagShape === 'round') { document.getElementById('size-w').value = 48; document.getElementById('size-h').value = 48; if (holeEl) holeEl.value = 'top'; }
+        else if (tagShape === 'square') { document.getElementById('size-w').value = 48; document.getElementById('size-h').value = 48; if (holeEl) holeEl.value = 'top'; }
+
+        document.getElementById('col-base').value = '#0f172a';
+        document.getElementById('col-top').value = '#38bdf8';
+      }
+      updateMaterialColors();
+      const currentFont = document.getElementById('font-family').value;
+      await ensureFontLoaded(currentFont);
+      build3DModel();
+    }
+
+    const ALL_STAMP_IDS = ['none', 'paw', 'bone', 'heart', 'star', 'crown', 'coffee', 'wifi', 'clover', 'music', 'bell', 'fish', 'smile', 'sakura', 'torii', 'hotel', 'cross'];
+
+    function getStampName(s, isEn) {
+      const names = {
+        none: { ja: 'なし', en: 'None' },
+        paw: { ja: '肉球', en: 'Paw' },
+        bone: { ja: 'ボーン', en: 'Bone' },
+        heart: { ja: 'ハート', en: 'Heart' },
+        star: { ja: 'スター', en: 'Star' },
+        crown: { ja: '王冠', en: 'Crown' },
+        coffee: { ja: 'カフェ', en: 'Coffee' },
+        wifi: { ja: 'Wi-Fi', en: 'Wi-Fi' },
+        clover: { ja: 'クローバー', en: 'Clover' },
+        music: { ja: '音符', en: 'Music' },
+        bell: { ja: 'ベル', en: 'Bell' },
+        fish: { ja: 'さかな', en: 'Fish' },
+        smile: { ja: 'スマイル', en: 'Smile' },
+        sakura: { ja: '桜', en: 'Cherry Blossom' },
+        torii: { ja: '鳥居', en: 'Torii' },
+        hotel: { ja: 'キー', en: 'Hotel Key' },
+        cross: { ja: 'クロス', en: 'Cross' }
+      };
+      return (names[s] ? (isEn ? names[s].en : names[s].ja) : s);
+    }
+
+    function setStamp(stamp) {
+      currentStamp = stamp;
+      ALL_STAMP_IDS.forEach(s => {
+        const btn = document.getElementById('stamp-' + s);
+        if (!btn) return;
+        if (s === stamp) {
+          btn.className = 'p-1.5 rounded border border-amber-500 bg-amber-500/20 text-white font-bold shadow' + (s === 'none' ? ' col-span-2 sm:col-span-1 text-xs' : ' text-sm');
+        } else {
+          btn.className = 'p-1.5 rounded border border-slate-800 bg-slate-900 hover:border-slate-600 text-slate-300' + (s === 'none' ? ' col-span-2 sm:col-span-1 text-xs' : ' text-sm');
+        }
+      });
+      const lblCur = document.getElementById('lbl-stamp-current-name');
+      if (lblCur) {
+        lblCur.innerText = (isEnglish ? 'Selected: ' : '選択中: ') + getStampName(stamp, isEnglish);
+      }
+      build3DModel();
+    }
+
+    function toggleReversibleUI() {
+      const isRev = document.getElementById('jp-reversible').checked;
+      const backBox = document.getElementById('box-jp-back');
+      const flipBtn = document.getElementById('btn-flip');
+      if (isRev) {
+        backBox.classList.remove('hidden');
+        flipBtn.classList.remove('hidden');
+      } else {
+        backBox.classList.add('hidden');
+        flipBtn.classList.add('hidden');
+        if (currentMode === 'jp') isFlipped = false;
+      }
+      build3DModel();
+    }
+
+    function onJpDirChanged() {
+      const dir = document.getElementById('jp-dir').value;
+      if (dir === 'vertical') {
+        document.getElementById('size-w').value = 52;
+        document.getElementById('size-h').value = 125;
+      } else {
+        document.getElementById('size-w').value = 120;
+        document.getElementById('size-h').value = 55;
+      }
+      build3DModel();
+    }
+
+    function resetFontScale() {
+      const el = document.getElementById('font-scale');
+      if (el) el.value = 100;
+      build3DModel();
+    }
+
+    let isTextDragMode = false;
+    function toggleTextDragMode() {
+      isTextDragMode = !isTextDragMode;
+      if (controls) controls.enabled = !isTextDragMode;
+      const btn = document.getElementById('btn-text-drag-mode');
+      const container = document.getElementById('canvas-container');
+      if (btn) {
+        if (isTextDragMode) {
+          btn.className = 'bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs px-2.5 py-1.5 rounded border border-amber-300 shadow transition';
+          btn.innerText = isEnglish ? '✥ Drag Text Mode: ON (Drag on 3D view)' : '✥ マウスで文字移動: ON（画面ドラッグで移動）';
+          if (container) container.style.cursor = 'move';
+        } else {
+          btn.className = 'bg-slate-800/90 hover:bg-slate-700 text-amber-300 font-bold text-xs px-2.5 py-1.5 rounded border border-amber-500/40 shadow transition';
+          btn.innerText = isEnglish ? '✥ Drag Text Mode: OFF' : '✥ マウスで文字移動: OFF';
+          if (container) container.style.cursor = 'default';
+        }
+      }
+    }
+
+    function resetTextOffset() {
+      const ox = document.getElementById('text-offset-x');
+      const oy = document.getElementById('text-offset-y');
+      if (ox) ox.value = 0;
+      if (oy) oy.value = 0;
+      build3DModel();
+    }
+
+    function setupTextMouseDrag(domElem) {
+      let dragging = false;
+      let startX = 0, startY = 0;
+      let initOffX = 0, initOffY = 0;
+
+      domElem.addEventListener('pointerdown', (e) => {
+        if (!isTextDragMode && !e.shiftKey) return;
+        if (e.button !== 0) return;
+        dragging = true;
+        if (controls) controls.enabled = false;
+        startX = e.clientX;
+        startY = e.clientY;
+        const ox = document.getElementById('text-offset-x');
+        const oy = document.getElementById('text-offset-y');
+        initOffX = ox ? parseFloat(ox.value) || 0 : 0;
+        initOffY = oy ? parseFloat(oy.value) || 0 : 0;
+        domElem.setPointerCapture(e.pointerId);
+        e.preventDefault();
+      });
+
+      domElem.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        const dxPx = e.clientX - startX;
+        const dyPx = e.clientY - startY;
+        const mmPerPx = 0.18;
+        const dirSignX = isFlipped ? -1 : 1;
+        const newX = Math.max(-30, Math.min(30, Math.round((initOffX + dxPx * mmPerPx * dirSignX) * 2) / 2));
+        const newY = Math.max(-30, Math.min(30, Math.round((initOffY - dyPx * mmPerPx) * 2) / 2));
+        const ox = document.getElementById('text-offset-x');
+        const oy = document.getElementById('text-offset-y');
+        if (ox) ox.value = newX;
+        if (oy) oy.value = newY;
+        scheduleUpdate();
+      });
+
+      const endDrag = (e) => {
+        if (!dragging) return;
+        dragging = false;
+        if (controls && !isTextDragMode) controls.enabled = true;
+        try { domElem.releasePointerCapture(e.pointerId); } catch (err) {}
+      };
+      domElem.addEventListener('pointerup', endDrag);
+      domElem.addEventListener('pointercancel', endDrag);
+    }
+
+    function applyFlipTransform() {
+      const baseT = parseFloat(document.getElementById('thick-base').value) || 2.0;
+      const topT = parseFloat(document.getElementById('thick-top').value) || 1.0;
+      fullGroup.rotation.x = 0;
+      fullGroup.rotation.y = isFlipped ? Math.PI : 0;
+      fullGroup.rotation.z = 0;
+      // すべてのモード（自立スタンド・差し込み式台座を含む）で常にプレート中心(0,0)を回転中心に固定
+      fullGroup.position.set(0, 0, isFlipped ? (baseT + topT) : 0);
+
+      const inlineTxt = document.getElementById('txt-pet-flip-inline');
+      if (inlineTxt) {
+        if (isEnglish) {
+          inlineTxt.innerText = isFlipped ? 'Showing Back Side (Click to Flip to Front)' : 'Showing Front Side (Click to Flip to Back)';
+        } else {
+          inlineTxt.innerText = isFlipped ? '現在【裏面】を表示中（クリックで表面へ戻す）' : '現在【表面】を表示中（クリックで裏面を見る）';
+        }
+      }
+    }
+
+    function flipBoard() {
+      isFlipped = !isFlipped;
+      applyFlipTransform();
+    }
+
+    function viewStandAngle() {
+      camera.up.set(0, 1, 0);
+      camera.position.set(0, -70, 95);
+      controls.target.set(0, 0, 0);
+      controls.update();
+    }
+
+    function setJpPreset(front, subText, isRev, dir = 'horizontal', frame = 'wood') {
+      let fTxt = front;
+      let sTxt = subText || '';
+      if (isEnglish) {
+        if (front === '佐藤') { fTxt = 'SATO'; sTxt = 'FAMILY'; }
+        else if (front === '田中') { fTxt = 'TANAKA'; sTxt = ''; }
+        else if (front === '鈴木') { fTxt = 'SUZUKI'; sTxt = 'ROOM 102'; }
+      }
+      document.getElementById('jp-text').value = fTxt;
+      if (document.getElementById('jp-text-sub')) {
+        document.getElementById('jp-text-sub').value = sTxt;
+      }
+      document.getElementById('jp-reversible').checked = isRev;
+      document.getElementById('jp-dir').value = dir;
+      document.getElementById('jp-frame').value = frame;
+      toggleReversibleUI();
+
+      if (dir === 'vertical') {
+        document.getElementById('size-w').value = 52;
+        document.getElementById('size-h').value = 125;
+      } else {
+        document.getElementById('size-w').value = 120;
+        document.getElementById('size-h').value = 55;
+      }
+      build3DModel();
+    }
+
+    function setPetPreset(name, tel, shape = 'round', deco = 'paw') {
+      let petName = name;
+      if (isEnglish && name === 'ポチ') petName = 'POCHI';
+      const nameEl = document.getElementById('pet-name');
+      const telEl = document.getElementById('pet-tel');
+      const backTelEl = document.getElementById('pet-back-tel');
+      if (nameEl) nameEl.value = petName;
+      if (telEl) telEl.value = tel;
+      if (backTelEl) backTelEl.value = 'TEL: ' + tel;
+      setPetDeco(deco);
+      setPetShape(shape);
+    }
+
+    function setTagPreset(text, shape = 'rect', subText = '') {
+      let tagTxt = text;
+      if (isEnglish && text === 'なまえ') tagTxt = 'NAME';
+      const tagEl = document.getElementById('tag-text');
+      const subEl = document.getElementById('tag-sub');
+      if (tagEl) tagEl.value = tagTxt;
+      if (subEl) subEl.value = subText;
+      setTagShape(shape);
+    }
+
+    function updateMaterialColors() {
+      baseMat.color.set(document.getElementById('col-base').value);
+      topMat.color.set(document.getElementById('col-top').value);
+    }
+
+    function clearGroup(grp) {
+      while (grp.children.length > 0) {
+        const obj = grp.children[0];
+        if (obj.geometry) obj.geometry.dispose();
+        grp.remove(obj);
+      }
+    }
+
+    function createRoundedRectShape(w, h, r) {
+      const shape = new THREE.Shape();
+      const cr = Math.min(r, w / 2, h / 2);
+      const x = -w / 2, y = -h / 2;
+      shape.moveTo(x + cr, y);
+      shape.lineTo(x + w - cr, y);
+      shape.quadraticCurveTo(x + w, y, x + w, y + cr);
+      shape.lineTo(x + w, y + h - cr);
+      shape.quadraticCurveTo(x + w, y + h, x + w - cr, y + h);
+      shape.lineTo(x + cr, y + h);
+      shape.quadraticCurveTo(x, y + h, x, y + h - cr);
+      shape.lineTo(x, y + cr);
+      shape.quadraticCurveTo(x, y, x + cr, y);
+      return shape;
+    }
+
+    // 🌟 多角形（◇ひし形・⬡六角形など）の角を滑らかに丸めるヘルパー
+    function createRoundedPolygonShape(pts, r) {
+      const shape = new THREE.Shape();
+      const n = pts.length;
+      for (let i = 0; i < n; i++) {
+        const prev = pts[(i - 1 + n) % n];
+        const curr = pts[i];
+        const next = pts[(i + 1) % n];
+
+        const v1x = prev[0] - curr[0], v1y = prev[1] - curr[1];
+        const v2x = next[0] - curr[0], v2y = next[1] - curr[1];
+        const len1 = Math.hypot(v1x, v1y) || 1;
+        const len2 = Math.hypot(v2x, v2y) || 1;
+        const d = Math.min(r, len1 * 0.35, len2 * 0.35);
+
+        const p1x = curr[0] + (v1x / len1) * d;
+        const p1y = curr[1] + (v1y / len1) * d;
+        const p2x = curr[0] + (v2x / len2) * d;
+        const p2y = curr[1] + (v2y / len2) * d;
+
+        if (i === 0) shape.moveTo(p1x, p1y);
+        else shape.lineTo(p1x, p1y);
+
+        shape.quadraticCurveTo(curr[0], curr[1], p2x, p2y);
+      }
+      shape.closePath();
+      return shape;
+    }
+
+    // 🌟 ペット・ネームタグ共通のシンプル幾何学シェイプ（〇・◇・□・▭・⬭・⬡）生成関数
+    // inset > 0 を指定すると、外周と完全同心円・平行オフセットの内側輪郭を返す（フチが1mmもはみ出ない）
+    function getPetTagShape(type, width = 44, height = 44, inset = 0) {
+      const w = width / 2;
+      const h = height / 2;
+
+      if (type === 'round') {
+        // 〇 丸型・サークル
+        const shape = new THREE.Shape();
+        const r = Math.max(2, Math.min(w, h) - inset);
+        shape.absarc(0, 0, r, 0, Math.PI * 2, false);
+        return shape;
+
+      } else if (type === 'diamond') {
+        // ◇ ひし形・ダイヤ（平行オフセットにより外枠と内枠が完全一致）
+        const hyp = Math.hypot(w, h) || 1;
+        const wIn = Math.max(4, w - inset * (hyp / Math.max(h, 1)));
+        const hIn = Math.max(4, h - inset * (hyp / Math.max(w, 1)));
+        const pts = [
+          [0, hIn],
+          [-wIn, 0],
+          [0, -hIn],
+          [wIn, 0]
+        ];
+        const baseR = Math.min(w, h) * 0.16;
+        return createRoundedPolygonShape(pts, Math.max(0.8, baseR - inset * 0.8));
+
+      } else if (type === 'square') {
+        // □ 角丸スクエア（正方形・角丸も完全同心円）
+        const s = Math.min(width, height);
+        const outerR = Math.min(6, s * 0.18);
+        const sIn = Math.max(6, s - inset * 2);
+        return createRoundedRectShape(sIn, sIn, Math.max(0.8, outerR - inset));
+
+      } else if (type === 'rect') {
+        // ▭ 角丸長方形（角丸半径も outerR - inset で完全同心円・はみ出しゼロ）
+        const outerR = Math.min(6, Math.min(width, height) * 0.22);
+        const wIn = Math.max(6, width - inset * 2);
+        const hIn = Math.max(6, height - inset * 2);
+        return createRoundedRectShape(wIn, hIn, Math.max(0.8, outerR - inset));
+
+      } else if (type === 'capsule') {
+        // ⬭ 小判・カプセル型（両端が完全な半円）
+        const outerR = Math.min(w, h) * 0.98;
+        const wIn = Math.max(6, width - inset * 2);
+        const hIn = Math.max(6, height - inset * 2);
+        return createRoundedRectShape(wIn, hIn, Math.max(1.0, outerR - inset));
+
+      } else if (type === 'hex') {
+        // ⬡ 六角形タグ（横長時はホテルキー風6角形、正方形〜縦長時は6面均等な正六角形）
+        if (width > height * 1.25) {
+          // ホテルキー風横長6角形（左右が美しい120度角・左右均等ファセット）
+          const hIn = Math.max(4, h - inset);
+          const tipIn = Math.min(w * 0.35, hIn * 0.57735);
+          const wIn = Math.max(6, w - inset * 1.155);
+          const pts = [
+            [-wIn, 0],
+            [-wIn + tipIn, -hIn],
+            [wIn - tipIn, -hIn],
+            [wIn, 0],
+            [wIn - tipIn, hIn],
+            [-wIn + tipIn, hIn]
+          ];
+          const baseR = Math.min(w, h) * 0.12;
+          return createRoundedPolygonShape(pts, Math.max(0.8, baseR - inset * 0.6));
+        } else {
+          // 6面が美しく均等に揃った正六角形（すべての辺長・内角が完全一致）
+          const r = Math.max(4, Math.min(h, w / 0.866025) - inset);
+          const wIn = r * 0.866025;
+          const hIn = r;
+          const pts = [
+            [0, hIn],
+            [-wIn, hIn * 0.5],
+            [-wIn, -hIn * 0.5],
+            [0, -hIn],
+            [wIn, -hIn * 0.5],
+            [wIn, hIn * 0.5]
+          ];
+          const baseR = Math.min(w, h) * 0.12;
+          return createRoundedPolygonShape(pts, Math.max(0.8, baseR - inset * 0.6));
+        }
+      }
+
+      const shape = new THREE.Shape();
+      shape.absarc(0, 0, Math.max(2, Math.min(w, h) - inset), 0, Math.PI * 2, false);
+      return shape;
+    }
+
+    // 🌟 全16種・クッキリ高精細ベクター立体スタンプ描画エンジン
+    // OSの絵文字フォントに依存せずCanvas2Dパスで完全白(#ffffff)描画するため、3Dメッシュ化で溶けたりボケたりしない
+    function drawVectorStamp(ctx, id, cx, cy, size) {
+      if (!id || id === 'none') return;
+      ctx.save();
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      const s = size;
+
+      if (id === 'paw') {
+        // 🐾 肉球：中央のメインパッド＋4つのクッキリ独立した指
+        ctx.beginPath();
+        const pw = s * 0.25, ph = s * 0.22;
+        ctx.moveTo(cx, cy + s * 0.26);
+        ctx.bezierCurveTo(cx - pw * 1.5, cy + s * 0.26, cx - pw * 1.3, cy - ph * 0.2, cx, cy + ph * 0.3);
+        ctx.bezierCurveTo(cx + pw * 1.3, cy - ph * 0.2, cx + pw * 1.5, cy + s * 0.26, cx, cy + s * 0.26);
+        ctx.fill();
+        const toes = [
+          { x: cx - s * 0.27, y: cy - s * 0.06, rx: s * 0.08, ry: s * 0.11, rot: -0.35 },
+          { x: cx - s * 0.10, y: cy - s * 0.22, rx: s * 0.085, ry: s * 0.12, rot: -0.10 },
+          { x: cx + s * 0.10, y: cy - s * 0.22, rx: s * 0.085, ry: s * 0.12, rot: 0.10 },
+          { x: cx + s * 0.27, y: cy - s * 0.06, rx: s * 0.08, ry: s * 0.11, rot: 0.35 }
+        ];
+        toes.forEach(t => {
+          ctx.beginPath();
+          ctx.ellipse(t.x, t.y, t.rx, t.ry, t.rot, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      } else if (id === 'bone') {
+        // 🦴 ボーン：中央バー＋両端のダブル関節
+        const bw = s * 0.50, bh = s * 0.16;
+        ctx.fillRect(cx - bw / 2, cy - bh / 2, bw, bh);
+        const kr = s * 0.13;
+        const kx = bw / 2;
+        const ky = bh * 0.52;
+        [[-kx, -ky], [-kx, ky], [kx, -ky], [kx, ky]].forEach(([ox, oy]) => {
+          ctx.beginPath();
+          ctx.arc(cx + ox, cy + oy, kr, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      } else if (id === 'heart') {
+        // ♥ ハート：美しいプロポーション
+        const hw = s * 0.42, hh = s * 0.40;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy + hh * 0.85);
+        ctx.bezierCurveTo(cx - hw * 1.15, cy + hh * 0.1, cx - hw * 1.15, cy - hh * 0.85, cx, cy - hh * 0.3);
+        ctx.bezierCurveTo(cx + hw * 1.15, cy - hh * 0.85, cx + hw * 1.15, cy + hh * 0.1, cx, cy + hh * 0.85);
+        ctx.fill();
+      } else if (id === 'star') {
+        // ★ 5芒星：均等でシャープな星形
+        const outerR = s * 0.46, innerR = s * 0.20;
+        ctx.beginPath();
+        for (let i = 0; i < 10; i++) {
+          const angle = -Math.PI / 2 + (i * Math.PI / 5);
+          const r = (i % 2 === 0) ? outerR : innerR;
+          const px = cx + Math.cos(angle) * r;
+          const py = cy + Math.sin(angle) * r;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fill();
+      } else if (id === 'crown') {
+        // 👑 王冠：下部ベース＋3つの尖塔＋先端パール
+        const cw = s * 0.40, ch = s * 0.32;
+        ctx.beginPath();
+        ctx.moveTo(cx - cw, cy + ch * 0.65);
+        ctx.lineTo(cx + cw, cy + ch * 0.65);
+        ctx.lineTo(cx + cw * 0.85, cy - ch * 0.35);
+        ctx.lineTo(cx + cw * 0.40, cy + ch * 0.05);
+        ctx.lineTo(cx, cy - ch * 0.85);
+        ctx.lineTo(cx - cw * 0.40, cy + ch * 0.05);
+        ctx.lineTo(cx - cw * 0.85, cy - ch * 0.35);
+        ctx.closePath();
+        ctx.fill();
+        [[-cw * 0.85, -ch * 0.35], [0, -ch * 0.85], [cw * 0.85, -ch * 0.35]].forEach(([px, py]) => {
+          ctx.beginPath();
+          ctx.arc(cx + px, cy + py, s * 0.07, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.fillRect(cx - cw, cy + ch * 0.75, cw * 2, s * 0.08);
+      } else if (id === 'coffee') {
+        // ☕ カフェカップ：底丸カップ＋取っ手＋ソーサー＋立ち昇る2本の湯気
+        const cw = s * 0.28, ch = s * 0.24;
+        ctx.beginPath();
+        ctx.moveTo(cx - cw, cy - ch * 0.5);
+        ctx.lineTo(cx + cw, cy - ch * 0.5);
+        ctx.lineTo(cx + cw * 0.85, cy + ch * 0.55);
+        ctx.quadraticCurveTo(cx + cw * 0.7, cy + ch * 0.95, cx, cy + ch * 0.95);
+        ctx.quadraticCurveTo(cx - cw * 0.7, cy + ch * 0.95, cx - cw * 0.85, cy + ch * 0.55);
+        ctx.closePath();
+        ctx.fill();
+        // 取っ手
+        ctx.lineWidth = Math.max(2.5, s * 0.085);
+        ctx.beginPath();
+        ctx.arc(cx + cw * 0.95, cy + ch * 0.15, s * 0.13, -Math.PI * 0.38, Math.PI * 0.48);
+        ctx.stroke();
+        // ソーサー
+        ctx.beginPath();
+        ctx.ellipse(cx, cy + ch + s * 0.05, s * 0.40, s * 0.07, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // 湯気2本
+        ctx.lineWidth = Math.max(2, s * 0.065);
+        [-s * 0.10, s * 0.10].forEach(ox => {
+          ctx.beginPath();
+          ctx.moveTo(cx + ox, cy - ch * 0.7);
+          ctx.quadraticCurveTo(cx + ox + s * 0.06, cy - ch * 1.0, cx + ox, cy - ch * 1.25);
+          ctx.stroke();
+        });
+      } else if (id === 'wifi') {
+        // 📶 Wi-Fi：下部ドット＋放射状の3重同心円弧
+        const by = cy + s * 0.28;
+        ctx.beginPath();
+        ctx.arc(cx, by, s * 0.08, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.lineWidth = Math.max(2.5, s * 0.09);
+        [s * 0.24, s * 0.42, s * 0.60].forEach(r => {
+          ctx.beginPath();
+          ctx.arc(cx, by, r, -Math.PI * 0.75, -Math.PI * 0.25);
+          ctx.stroke();
+        });
+      } else if (id === 'clover') {
+        // 🍀 四つ葉のクローバー：4枚の葉＋茎
+        const lr = s * 0.18, dist = s * 0.16;
+        [[0, -dist], [dist, 0], [0, dist], [-dist, 0]].forEach(([ox, oy]) => {
+          ctx.beginPath();
+          ctx.arc(cx + ox, cy + oy, lr, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.lineWidth = Math.max(2, s * 0.07);
+        ctx.beginPath();
+        ctx.moveTo(cx, cy + dist);
+        ctx.quadraticCurveTo(cx + s * 0.14, cy + s * 0.34, cx + s * 0.12, cy + s * 0.45);
+        ctx.stroke();
+      } else if (id === 'music') {
+        // ♪ 8分音符：斜めの楕円玉＋直立ステム＋波打つ旗
+        ctx.beginPath();
+        ctx.ellipse(cx - s * 0.12, cy + s * 0.22, s * 0.15, s * 0.11, -0.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(cx - s * 0.01, cy - s * 0.32, s * 0.08, s * 0.54);
+        ctx.lineWidth = Math.max(2.5, s * 0.085);
+        ctx.beginPath();
+        ctx.moveTo(cx + s * 0.06, cy - s * 0.32);
+        ctx.bezierCurveTo(cx + s * 0.32, cy - s * 0.22, cx + s * 0.24, cy - s * 0.05, cx + s * 0.30, cy + s * 0.08);
+        ctx.stroke();
+      } else if (id === 'bell') {
+        // 🔔 ベル：上の吊り環＋ベル本体フレア＋舌（クラッパー）
+        ctx.lineWidth = Math.max(2, s * 0.065);
+        ctx.beginPath();
+        ctx.arc(cx, cy - s * 0.32, s * 0.09, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx - s * 0.15, cy - s * 0.25);
+        ctx.quadraticCurveTo(cx - s * 0.26, cy + s * 0.12, cx - s * 0.38, cy + s * 0.25);
+        ctx.lineTo(cx + s * 0.38, cy + s * 0.25);
+        ctx.quadraticCurveTo(cx + s * 0.26, cy + s * 0.12, cx + s * 0.15, cy - s * 0.25);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cx, cy + s * 0.28, s * 0.09, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (id === 'fish') {
+        // 🐟 さかな：丸みのある魚体＋三角尾びれ＋黒抜き目
+        ctx.beginPath();
+        ctx.ellipse(cx - s * 0.05, cy, s * 0.32, s * 0.20, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(cx + s * 0.20, cy);
+        ctx.lineTo(cx + s * 0.44, cy - s * 0.22);
+        ctx.lineTo(cx + s * 0.36, cy);
+        ctx.lineTo(cx + s * 0.44, cy + s * 0.22);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.arc(cx - s * 0.22, cy - s * 0.05, s * 0.045, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (id === 'smile') {
+        // ☺ スマイル：丸顔＋2つの目＋にっこり口
+        ctx.beginPath();
+        ctx.arc(cx, cy, s * 0.42, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#000000';
+        ctx.strokeStyle = '#000000';
+        [-s * 0.16, s * 0.16].forEach(ox => {
+          ctx.beginPath();
+          ctx.arc(cx + ox, cy - s * 0.10, s * 0.065, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.lineWidth = Math.max(2.5, s * 0.075);
+        ctx.beginPath();
+        ctx.arc(cx, cy + s * 0.05, s * 0.22, 0.2 * Math.PI, 0.8 * Math.PI);
+        ctx.stroke();
+      } else if (id === 'sakura') {
+        // 🌸 桜：先端に切れ込みのある5枚の花びら＋花芯
+        for (let i = 0; i < 5; i++) {
+          const a = -Math.PI / 2 + (i * Math.PI * 2 / 5);
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(a);
+          ctx.beginPath();
+          const pw = s * 0.14, ph = s * 0.40;
+          ctx.moveTo(0, 0);
+          ctx.bezierCurveTo(-pw, -ph * 0.4, -pw * 1.2, -ph * 0.85, -pw * 0.4, -ph);
+          ctx.lineTo(0, -ph * 0.84);
+          ctx.lineTo(pw * 0.4, -ph);
+          ctx.bezierCurveTo(pw * 1.2, -ph * 0.85, pw, -ph * 0.4, 0, 0);
+          ctx.fill();
+          ctx.restore();
+        }
+        ctx.beginPath();
+        ctx.arc(cx, cy, s * 0.08, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (id === 'torii') {
+        // ⛩️ 鳥居：上部の反り笠木＋貫＋2本柱＋額束
+        const tw = s * 0.42;
+        ctx.beginPath();
+        ctx.moveTo(cx - tw * 1.05, cy - s * 0.32);
+        ctx.quadraticCurveTo(cx, cy - s * 0.25, cx + tw * 1.05, cy - s * 0.32);
+        ctx.lineTo(cx + tw * 1.00, cy - s * 0.22);
+        ctx.quadraticCurveTo(cx, cy - s * 0.16, cx - tw * 1.00, cy - s * 0.22);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillRect(cx - tw * 0.90, cy - s * 0.10, tw * 1.80, s * 0.07);
+        const pw = s * 0.08;
+        ctx.fillRect(cx - tw * 0.55 - pw / 2, cy - s * 0.20, pw, s * 0.55);
+        ctx.fillRect(cx + tw * 0.55 - pw / 2, cy - s * 0.20, pw, s * 0.55);
+        ctx.fillRect(cx - s * 0.04, cy - s * 0.20, s * 0.08, s * 0.10);
+      } else if (id === 'hotel') {
+        // 🗝️ ホテルキー：上部リング頭＋細軸＋ノッチ歯
+        const hy = cy - s * 0.18;
+        ctx.lineWidth = Math.max(2.5, s * 0.085);
+        ctx.beginPath();
+        ctx.arc(cx, hy, s * 0.15, 0, Math.PI * 2);
+        ctx.stroke();
+        const shW = s * 0.08;
+        ctx.fillRect(cx - shW / 2, hy + s * 0.13, shW, s * 0.38);
+        ctx.fillRect(cx, cy + s * 0.18, s * 0.16, s * 0.07);
+        ctx.fillRect(cx, cy + s * 0.28, s * 0.12, s * 0.07);
+      } else if (id === 'cross') {
+        // ✚ クロス：太さ均等な十字架
+        const arm = s * 0.38, thk = s * 0.18;
+        ctx.fillRect(cx - arm, cy - thk / 2, arm * 2, thk);
+        ctx.fillRect(cx - thk / 2, cy - arm, thk, arm * 2);
+      }
+
+      ctx.restore();
+    }
+
+    // 🌟 3Dビルドメイン
+    function build3DModel() {
+      clearGroup(baseGroup);
+      clearGroup(topGroup);
+
+      fullGroup.position.set(0, 0, 0);
+      fullGroup.rotation.set(0, 0, 0);
+
+      const W = parseFloat(document.getElementById('size-w').value);
+      const H = parseFloat(document.getElementById('size-h').value);
+      const baseT = parseFloat(document.getElementById('thick-base').value);
+      const topT = parseFloat(document.getElementById('thick-top').value);
+      const font = document.getElementById('font-family').value;
+      const standType = document.getElementById('stand-type').value;
+
+      document.getElementById('val-w').innerText = W + ' mm';
+      document.getElementById('val-h').innerText = H + ' mm';
+      document.getElementById('val-base').innerText = baseT.toFixed(1) + ' mm';
+      document.getElementById('val-top').innerText = topT.toFixed(1) + ' mm';
+
+      // 1. 土台プレートのシェイプ作成（ペット・ネームタグともに getPetTagShape で多様な形状に対応）
+      const petShape = document.getElementById('pet-shape') ? document.getElementById('pet-shape').value : 'round';
+      const tagShape = document.getElementById('tag-shape') ? document.getElementById('tag-shape').value : 'rect';
+      let plateShape;
+      if (currentMode === 'pet') {
+        plateShape = getPetTagShape(petShape, W, H, 0);
+      } else if (currentMode === 'tag') {
+        plateShape = getPetTagShape(tagShape, W, H, 0);
+      } else {
+        plateShape = createRoundedRectShape(W, H, 3);
+      }
+
+      // 看板モード時の穴あけ
+      if (currentMode === 'qr' || currentMode === 'jp') {
+        if (standType === 'holes') {
+          const inset = 5;
+          [[-W/2+inset, -H/2+inset], [W/2-inset, -H/2+inset], [-W/2+inset, H/2-inset], [W/2-inset, H/2-inset]].forEach(([hx, hy]) => {
+            const hole = new THREE.Path();
+            hole.absarc(hx, hy, 2.0, 0, Math.PI * 2, true);
+            plateShape.holes.push(hole);
+          });
+        } else if (standType === 'hanging') {
+          if (currentMode === 'jp' && document.getElementById('jp-reversible').checked) {
+            const hOffset = W * 0.28;
+            [[-hOffset, H/2 - 6], [hOffset, H/2 - 6]].forEach(([hx, hy]) => {
+              const hole = new THREE.Path();
+              hole.absarc(hx, hy, 2.2, 0, Math.PI * 2, true);
+              plateShape.holes.push(hole);
+            });
+          } else {
+            const hole = new THREE.Path();
+            hole.absarc(0, H/2 - 5, 2.2, 0, Math.PI * 2, true);
+            plateShape.holes.push(hole);
+          }
+        }
+      }
+
+      // キーホルダー・ペットタグの「内側穴」処理（ExtrudeGeometryの前にくり抜き・最適位置固定）
+      if (currentMode === 'tag') {
+        const tagHole = document.getElementById('tag-hole').value;
+        const holeDia = parseFloat(document.getElementById('tag-hole-dia').value) || 4.5;
+        const innerR = Math.min(Math.max(holeDia / 2, 0.8), 4.0);
+        if (tagHole === 'inside-left') {
+          const effW = (tagShape === 'round' || tagShape === 'square') ? Math.min(W, H) : W;
+          const hw = effW / 2;
+          const hasTagFrame = document.getElementById('tag-frame') ? (document.getElementById('tag-frame').value === 'yes') : true;
+          const framePad = hasTagFrame ? 2.2 : 0;
+          const shapePad = (tagShape === 'diamond') ? 6.5 : (tagShape === 'hex' ? 4.8 : 3.5);
+          // 穴の中心座標を固定し、内径(innerR)のみ変化させる
+          const holeCenterX = -hw + shapePad + framePad + 2.2;
+          const inHole = new THREE.Path();
+          inHole.absarc(holeCenterX, 0, innerR, 0, Math.PI * 2, true);
+          plateShape.holes.push(inHole);
+        }
+      } else if (currentMode === 'pet') {
+        const petHolePos = document.getElementById('pet-hole-pos') ? document.getElementById('pet-hole-pos').value : 'top';
+        const holeDia = parseFloat(document.getElementById('pet-hole-dia').value) || 3.5;
+        const innerR = Math.min(Math.max(holeDia / 2, 0.8), 4.0);
+        if (petHolePos === 'inside-top') {
+          const hh = (petShape === 'round' || petShape === 'square') ? Math.min(W, H) / 2 : H / 2;
+          const hasPetFrame = document.getElementById('pet-frame') ? (document.getElementById('pet-frame').value === 'yes') : true;
+          const framePad = hasPetFrame ? 2.0 : 0;
+          const insetTop = (petShape === 'diamond' || petShape === 'hex') ? 4.5 : 2.8;
+          // 穴の中心座標を固定し、内径(innerR)のみ変化させる
+          const holeY = hh - insetTop - framePad - 2.0;
+          const inHole = new THREE.Path();
+          inHole.absarc(0, holeY, innerR, 0, Math.PI * 2, true);
+          plateShape.holes.push(inHole);
+        }
+      }
+
+      const extrudeSettings = { depth: baseT, bevelEnabled: false, curveSegments: 96 };
+      const baseGeo = new THREE.ExtrudeGeometry(plateShape, extrudeSettings);
+      const baseMesh = new THREE.Mesh(baseGeo, baseMat);
+      baseGroup.add(baseMesh);
+
+      // 🌟 ペット＆ネームタグ共通：ベースの輪郭と100%完全一致する3D立体フチ取りリム（角のはみ出しゼロ）
+      if (currentMode === 'pet' || currentMode === 'tag') {
+        const activeShape = (currentMode === 'pet') ? petShape : tagShape;
+        const hasFrame = (currentMode === 'pet')
+          ? (document.getElementById('pet-frame') ? (document.getElementById('pet-frame').value === 'yes') : true)
+          : (document.getElementById('tag-frame') ? (document.getElementById('tag-frame').value === 'yes') : true);
+        if (hasFrame) {
+          const rimThick = 2.0;
+          const outerShape = getPetTagShape(activeShape, W, H, 0);
+          const innerShape = getPetTagShape(activeShape, W, H, rimThick);
+          const innerPts = innerShape.getPoints(160);
+          if (innerPts && innerPts.length > 2) {
+            const rimHole = new THREE.Path(innerPts.slice().reverse());
+            outerShape.holes.push(rimHole);
+            const rimGeo = new THREE.ExtrudeGeometry(outerShape, { depth: topT, bevelEnabled: false, curveSegments: 96 });
+            const rimMesh = new THREE.Mesh(rimGeo, topMat);
+            rimMesh.position.z = baseT;
+            topGroup.add(rimMesh);
+          }
+        }
+      }
+
+      // 看板スタンド足・台座
+      let isVerticalStand = false;
+      if (currentMode === 'qr' || currentMode === 'jp') {
+        if (standType === 'stand') {
+          isVerticalStand = true;
+          const footDepth = Math.max(32, H * 0.40);
+          const footGeo = new THREE.BoxGeometry(W * 0.82, baseT * 1.5, footDepth);
+          const footMesh = new THREE.Mesh(footGeo, baseMat);
+          footMesh.position.set(0, -H / 2 + (baseT * 0.75), -footDepth / 2 + baseT / 2);
+          baseGroup.add(footMesh);
+        } else if (standType === 'base-slot') {
+          isVerticalStand = true;
+          const baseBlockW = W * 1.15;
+          const baseBlockD = 32;
+          const baseBlockH = 12;
+
+          const baseBlockGeo = new THREE.BoxGeometry(baseBlockW, baseBlockD, baseBlockH);
+          const baseBlockMesh = new THREE.Mesh(baseBlockGeo, standMat);
+          baseBlockMesh.position.set(0, -H / 2 + baseBlockH / 4, -baseBlockH / 2 + baseT / 2);
+          baseGroup.add(baseBlockMesh);
+        }
+      }
+
+      // キーホルダー・ペットタグの「リング突起」（外径outerRは一定・内径innerRのみ変化・最適位置固定）
+      if (currentMode === 'tag') {
+        const tagHole = document.getElementById('tag-hole').value;
+        const holeDia = parseFloat(document.getElementById('tag-hole-dia').value) || 4.5;
+
+        if (tagHole === 'left' || tagHole === 'top') {
+          const outerR = 5.5; // リング突起の外径を常に一定(直径11mm)に固定
+          const innerR = Math.min(Math.max(holeDia / 2, 0.8), outerR - 1.5);
+          const tabShape = new THREE.Shape();
+          tabShape.absarc(0, 0, outerR, 0, Math.PI * 2, false);
+          const tabHole = new THREE.Path();
+          tabHole.absarc(0, 0, innerR, 0, Math.PI * 2, true);
+          tabShape.holes.push(tabHole);
+
+          const tabGeo = new THREE.ExtrudeGeometry(tabShape, { depth: baseT, bevelEnabled: false, curveSegments: 64 });
+          const tabMesh = new THREE.Mesh(tabGeo, baseMat);
+
+          const hw = (tagShape === 'round' || tagShape === 'square') ? Math.min(W, H) / 2 : W / 2;
+          const hh = (tagShape === 'round' || tagShape === 'square') ? Math.min(W, H) / 2 : H / 2;
+
+          if (tagHole === 'left') {
+            const leftEdgeX = (tagShape === 'diamond') ? -hw * 0.90 : ((tagShape === 'hex' && W > H * 1.15) ? -hw * 0.92 : -hw);
+            tabMesh.position.set(leftEdgeX - outerR + 1.8, 0, 0);
+          } else {
+            const topEdgeY = (tagShape === 'diamond') ? hh * 0.90 : ((tagShape === 'hex' && W <= H * 1.15) ? hh * 0.92 : hh);
+            tabMesh.position.set(0, topEdgeY + outerR - 1.8, 0);
+          }
+          baseGroup.add(tabMesh);
+        }
+      } else if (currentMode === 'pet') {
+        const petShape = document.getElementById('pet-shape') ? document.getElementById('pet-shape').value : 'round';
+        const petHolePos = document.getElementById('pet-hole-pos') ? document.getElementById('pet-hole-pos').value : 'top';
+        const holeDia = parseFloat(document.getElementById('pet-hole-dia').value) || 3.5;
+
+        if (petHolePos === 'top' || petHolePos === 'top-right' || petHolePos === 'left') {
+          const outerR = 5.5; // リング突起の外径を常に一定(直径11mm)に固定
+          const innerR = Math.min(Math.max(holeDia / 2, 0.8), outerR - 1.5);
+
+          const tabShape = new THREE.Shape();
+          tabShape.absarc(0, 0, outerR, 0, Math.PI * 2, false);
+          const tabHole = new THREE.Path();
+          tabHole.absarc(0, 0, innerR, 0, Math.PI * 2, true);
+          tabShape.holes.push(tabHole);
+
+          const tabGeo = new THREE.ExtrudeGeometry(tabShape, { depth: baseT, bevelEnabled: false, curveSegments: 64 });
+          const tabMesh = new THREE.Mesh(tabGeo, baseMat);
+
+          const hw = (petShape === 'round' || petShape === 'square') ? Math.min(W, H) / 2 : W / 2;
+          const hh = (petShape === 'round' || petShape === 'square') ? Math.min(W, H) / 2 : H / 2;
+          let baseX = 0, baseY = 0;
+
+          if (petHolePos === 'top') {
+            const topEdgeY = (petShape === 'diamond') ? hh * 0.90 : ((petShape === 'hex' && W <= H * 1.15) ? hh * 0.92 : hh);
+            baseX = 0;
+            baseY = topEdgeY + outerR - 1.8;
+          } else if (petHolePos === 'top-right') {
+            if (petShape === 'round') {
+              const r = Math.min(hw, hh);
+              const dist = r + outerR - 1.8;
+              baseX = dist * 0.7071;
+              baseY = dist * 0.7071;
+            } else if (petShape === 'diamond') {
+              const hyp = Math.hypot(hw, hh) || 1;
+              baseX = hw * 0.45 + (outerR - 1.8) * (hh / hyp);
+              baseY = hh * 0.45 + (outerR - 1.8) * (hw / hyp);
+            } else if (petShape === 'hex') {
+              baseX = hw * 0.52;
+              baseY = hh * 0.75 + outerR - 1.8;
+            } else {
+              baseX = hw * 0.65;
+              baseY = hh + outerR - 1.8;
+            }
+          } else if (petHolePos === 'left') {
+            const leftEdgeX = (petShape === 'diamond') ? -hw * 0.90 : ((petShape === 'hex' && W > H * 1.15) ? -hw * 0.92 : -hw);
+            baseX = leftEdgeX - outerR + 1.8;
+            baseY = 0;
+          }
+
+          tabMesh.position.set(baseX, baseY, 0);
+          baseGroup.add(tabMesh);
+        }
+      }
+
+      // 2. 表面デザインの描画
+      buildCanvasDesign(false, W, H, baseT, topT, font);
+
+      if ((currentMode === 'jp' && document.getElementById('jp-reversible').checked) ||
+          (currentMode === 'pet' && document.getElementById('pet-reverse-enable') && document.getElementById('pet-reverse-enable').checked)) {
+        buildCanvasDesign(true, W, H, baseT, topT, font);
+      }
+
+      // 3. すべてのモード・スタンド種別でプレート中心(0,0,0)を回転基準に固定
+      applyFlipTransform();
+    }
+
+    // 🌟 超高精細・輪郭スムージング＆内部隔壁ゼロ 3Dメッシュ生成エンジン (res = 9.6)
+    function buildCanvasDesign(isBackSide, W, H, baseT, topT, font) {
+      const res = 9.6;
+      const boundW = (currentMode === 'pet' || currentMode === 'tag') ? W * 1.15 : W;
+      const boundH = (currentMode === 'pet' || currentMode === 'tag') ? H * 1.15 : H;
+      const cw = Math.round(boundW * res);
+      const ch = Math.round(boundH * res);
+      const canvas = document.createElement('canvas');
+      canvas.width = cw;
+      canvas.height = ch;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, cw, ch);
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.imageSmoothingEnabled = true;
+
+      const fw = getFontWeight(font);
+      const fontScaleEl = document.getElementById('font-scale');
+      const fontScale = (fontScaleEl ? parseFloat(fontScaleEl.value) : 100) / 100;
+      if (document.getElementById('val-font-scale')) {
+        document.getElementById('val-font-scale').innerText = Math.round(fontScale * 100) + '%';
+      }
+      const textOffXEl = document.getElementById('text-offset-x');
+      const textOffYEl = document.getElementById('text-offset-y');
+      const textOffsetX = textOffXEl ? (parseFloat(textOffXEl.value) || 0) : 0;
+      const textOffsetY = textOffYEl ? (parseFloat(textOffYEl.value) || 0) : 0;
+      if (document.getElementById('val-text-x')) {
+        document.getElementById('val-text-x').innerText = (textOffsetX >= 0 ? '+' : '') + textOffsetX.toFixed(1) + ' mm';
+      }
+      if (document.getElementById('val-text-y')) {
+        document.getElementById('val-text-y').innerText = (textOffsetY >= 0 ? '+' : '') + textOffsetY.toFixed(1) + ' mm';
+      }
+
+      // 🌟 ピクセル完全中央揃え描画エンジン（各行の実際の白ピクセル境界[minX..maxX, minY..maxY]を検出し、1ピクセルの狂いもなく配置＋文字位置オフセット対応）
+      function drawPixelCenteredLines(targetCtx, cw, ch, targetCenterX, targetCenterY, lines, lineGapPx, maxTotalH) {
+        targetCenterX += textOffsetX * res;
+        targetCenterY -= textOffsetY * res;
+        const validLines = lines.filter(item => {
+          if (!item) return false;
+          if (item.type === 'stamp' && item.stamp && item.stamp !== 'none') return true;
+          if (item.stamp && item.stamp !== 'none') return true;
+          if (item.text && String(item.text).trim().length > 0) return true;
+          return false;
+        });
+        if (validLines.length === 0) return;
+
+        const rendered = [];
+        for (let i = 0; i < validLines.length; i++) {
+          const item = validLines[i];
+          const textStr = item.text ? String(item.text).trim() : '';
+          const hasStamp = (item.stamp && item.stamp !== 'none');
+          const isPureStamp = (item.type === 'stamp' || (hasStamp && !textStr));
+
+          const tmpC = document.createElement('canvas');
+          tmpC.width = cw;
+          tmpC.height = ch;
+          const tctx = tmpC.getContext('2d');
+          tctx.fillStyle = '#000000';
+          tctx.fillRect(0, 0, cw, ch);
+          tctx.fillStyle = '#ffffff';
+          tctx.strokeStyle = '#ffffff';
+          tctx.textAlign = 'center';
+          tctx.textBaseline = 'middle';
+          tctx.imageSmoothingEnabled = true;
+
+          const maxW = item.maxW || (cw * 0.88);
+          const lineMaxH = item.maxH || (ch * 0.82);
+
+          if (isPureStamp) {
+            const stampSize = item.size || Math.round(ch * 0.25);
+            drawVectorStamp(tctx, item.stamp, cw / 2, ch / 2, stampSize);
+          } else if (hasStamp && textStr) {
+            // スタンプとテキストを横並び（同一行）で一体描画
+            tctx.font = item.font || `bold 24px sans-serif`;
+            const m = tctx.measureText(textStr);
+            const estFontH = ((m.actualBoundingBoxAscent || 0) + (m.actualBoundingBoxDescent || 0)) || (ch * 0.22);
+            const stampSize = Math.max(12, Math.round(estFontH * 1.15));
+            const iconGap = Math.max(4, Math.round(stampSize * 0.32));
+            const totalContentW = stampSize + iconGap + m.width;
+
+            const scaleX = (totalContentW > maxW && totalContentW > 0) ? (maxW / totalContentW) : 1;
+            const scaleY = (estFontH > lineMaxH && estFontH > 0) ? (lineMaxH / estFontH) : 1;
+            const scale = Math.min(scaleX, scaleY);
+
+            tctx.save();
+            tctx.translate(cw / 2, ch / 2);
+            if (scale < 1) tctx.scale(scale, scale);
+
+            const startX = -totalContentW / 2;
+            drawVectorStamp(tctx, item.stamp, startX + stampSize / 2, 0, stampSize);
+            tctx.fillStyle = '#ffffff';
+            tctx.textAlign = 'left';
+            tctx.textBaseline = 'middle';
+            tctx.fillText(textStr, startX + stampSize + iconGap, 0);
+            tctx.restore();
+          } else {
+            // 通常のテキスト描画
+            tctx.font = item.font;
+            const m = tctx.measureText(textStr);
+            const estW = Math.max(m.width || 1, ((m.actualBoundingBoxLeft || 0) + (m.actualBoundingBoxRight || 0)));
+            const estH = ((m.actualBoundingBoxAscent || 0) + (m.actualBoundingBoxDescent || 0)) || (ch * 0.35);
+            const scaleX = (estW > maxW && estW > 0) ? (maxW / estW) : 1;
+            const scaleY = (estH > lineMaxH && estH > 0) ? (lineMaxH / estH) : 1;
+
+            if (scaleX < 1 || scaleY < 1) {
+              tctx.save();
+              tctx.translate(cw / 2, ch / 2);
+              tctx.scale(scaleX, scaleY);
+              tctx.fillText(textStr, 0, 0);
+              tctx.restore();
+            } else {
+              tctx.fillText(textStr, cw / 2, ch / 2);
+            }
+          }
+
+          // 実際に描画された白ピクセルの正確な境界ボックス [minX, maxX, minY, maxY] をスキャン
+          const data = tctx.getImageData(0, 0, cw, ch).data;
+          let minX = cw, maxX = -1, minY = ch, maxY = -1;
+          for (let py = 0; py < ch; py++) {
+            const rowOff = py * cw;
+            for (let px = 0; px < cw; px++) {
+              if (data[(rowOff + px) * 4] > 128) {
+                if (px < minX) minX = px;
+                if (px > maxX) maxX = px;
+                if (py < minY) minY = py;
+                if (py > maxY) maxY = py;
+              }
+            }
+          }
+
+          if (maxX >= minX && maxY >= minY) {
+            rendered.push({
+              canvas: tmpC,
+              minX,
+              minY,
+              w: maxX - minX + 1,
+              h: maxY - minY + 1
+            });
+          }
+        }
+
+        if (rendered.length === 0) return;
+
+        const gap = lineGapPx || 0;
+        let totalH = 0;
+        for (let i = 0; i < rendered.length; i++) totalH += rendered[i].h;
+        totalH += Math.max(0, rendered.length - 1) * gap;
+
+        // 全体の高さがプレートの安全縦幅(maxTotalH)を超える場合は自動縮小して枠内に収める
+        const blockScale = (maxTotalH && totalH > maxTotalH && totalH > 0) ? (maxTotalH / totalH) : 1;
+        const scaledTotalH = totalH * blockScale;
+        const scaledGap = gap * blockScale;
+
+        let curTopY = targetCenterY - scaledTotalH / 2;
+        for (let i = 0; i < rendered.length; i++) {
+          const r = rendered[i];
+          const drawW = r.w * blockScale;
+          const drawH = r.h * blockScale;
+          const destX = Math.round(targetCenterX - drawW / 2);
+          const destY = Math.round(curTopY);
+          targetCtx.drawImage(r.canvas, r.minX, r.minY, r.w, r.h, destX, destY, Math.max(1, Math.round(drawW)), Math.max(1, Math.round(drawH)));
+          curTopY += drawH + scaledGap;
+        }
+      }
+
+      if (currentMode === 'qr') {
+        const isQr = document.getElementById('qr-enable').value === 'yes';
+        const hasFrame = document.getElementById('qr-frame') ? (document.getElementById('qr-frame').value === 'yes') : true;
+        const frameLineW = Math.max(3, 2.0 * res);
+
+        if (hasFrame) {
+          ctx.lineWidth = frameLineW;
+          ctx.strokeRect(frameLineW, frameLineW, cw - frameLineW * 2, ch - frameLineW * 2);
+        }
+
+        const safeW = cw - (hasFrame ? frameLineW * 4.5 : cw * 0.10);
+        const safeH = ch - (hasFrame ? frameLineW * 4.5 : ch * 0.10);
+        const topTxt = (document.getElementById('qr-top-text').value || '').trim();
+        const botTxt = (document.getElementById('qr-bottom-text').value || '').trim();
+
+        if (isQr) {
+          // ─── A. QRコードありパターン ───
+          const url = document.getElementById('qr-url').value || 'https://example.com';
+          const qr = qrcode(0, 'M');
+          qr.addData(url);
+          qr.make();
+          const count = qr.getModuleCount();
+          const qrBoxSize = Math.min(cw * 0.68, ch * 0.54);
+          const cell = qrBoxSize / count;
+          const startX = (cw - qrBoxSize) / 2;
+          const startY = (ch - qrBoxSize) / 2;
+
+          for (let r = 0; r < count; r++) {
+            for (let c = 0; c < count; c++) {
+              if (qr.isDark(r, c)) {
+                ctx.fillRect(Math.floor(startX + c * cell), Math.floor(startY + r * cell), Math.ceil(cell), Math.ceil(cell));
+              }
+            }
+          }
+
+          const topLimit = hasFrame ? frameLineW * 1.8 : 2;
+          const botLimit = ch - (hasFrame ? frameLineW * 1.8 : 2);
+          const topCenterY = (topLimit + startY) / 2;
+          const botCenterY = (startY + qrBoxSize + botLimit) / 2;
+          const topMaxH = Math.max(8, (startY - topLimit) * 0.78);
+          const botMaxH = Math.max(8, (botLimit - (startY + qrBoxSize)) * 0.78);
+          const qrFontSize = Math.round(7.2 * res * fontScale);
+
+          if (topTxt || (currentStamp && currentStamp !== 'none')) {
+            drawPixelCenteredLines(ctx, cw, ch, cw / 2, topCenterY, [
+              { stamp: currentStamp, text: topTxt, font: `${fw} ${qrFontSize}px ${font}`, maxW: safeW, maxH: topMaxH }
+            ], 0, topMaxH);
+          }
+          if (botTxt) {
+            drawPixelCenteredLines(ctx, cw, ch, cw / 2, botCenterY, [
+              { text: botTxt, font: `${fw} ${qrFontSize}px ${font}`, maxW: safeW, maxH: botMaxH }
+            ], 0, botMaxH);
+          }
+        } else {
+          // ─── B. 🌟 QRコードなしパターン（ピクセル完全中央揃え） ───
+          const lines = [];
+          if (currentStamp && currentStamp !== 'none') {
+            lines.push({ type: 'stamp', stamp: currentStamp, size: Math.round(ch * 0.22 * fontScale) });
+          }
+          if (topTxt) {
+            const mainFontSize = Math.round(ch * (botTxt ? 0.28 : 0.36) * fontScale);
+            lines.push({ text: topTxt, font: `${fw} ${mainFontSize}px ${font}`, maxW: safeW, maxH: safeH * (botTxt ? 0.56 : 0.76) });
+          }
+          if (botTxt) {
+            const subFontSize = Math.round(ch * 0.14 * fontScale);
+            lines.push({ text: botTxt, font: `${fw} ${subFontSize}px ${font}`, maxW: safeW * 0.92, maxH: safeH * 0.28 });
+          }
+          drawPixelCenteredLines(ctx, cw, ch, cw / 2, ch / 2, lines, Math.round(ch * 0.07), safeH);
+        }
+      } else if (currentMode === 'jp') {
+        // ─── 🏠 表札・ドアプレートモード（縦書き・横書き2段ともピクセル完全中央揃え） ───
+        const frame = document.getElementById('jp-frame').value;
+        const dir = document.getElementById('jp-dir').value;
+        const mainTxt = isBackSide
+          ? (document.getElementById('jp-text-back').value || '')
+          : (document.getElementById('jp-text').value || '');
+        const subTxt = (!isBackSide && document.getElementById('jp-text-sub'))
+          ? document.getElementById('jp-text-sub').value.trim()
+          : '';
+
+        if (frame === 'none') {
+          // 🚫 縁・枠なし
+        } else if (frame === 'double') {
+          ctx.lineWidth = 2.0 * res;
+          ctx.strokeRect(8, 8, cw - 16, ch - 16);
+          ctx.lineWidth = 1.0 * res;
+          ctx.strokeRect(24, 24, cw - 48, ch - 48);
+        } else if (frame === 'retro') {
+          ctx.lineWidth = 2.5 * res;
+          ctx.strokeRect(10, 10, cw - 20, ch - 20);
+        } else if (frame === 'wood') {
+          ctx.lineWidth = 1.8 * res;
+          ctx.strokeRect(8, 8, cw - 16, ch - 16);
+        }
+
+        const framePad = (frame === 'double') ? 32 : ((frame === 'none') ? 8 : 16);
+        const safeW = cw - framePad * 2 - cw * 0.08;
+        const safeH = ch - framePad * 2 - ch * 0.08;
+
+        if (dir === 'vertical') {
+          const chars = Array.from(mainTxt);
+          const vLines = [];
+          const hasStamp = (currentStamp && currentStamp !== 'none');
+          const totalItems = Math.max(chars.length + (hasStamp ? 1 : 0), 1);
+          const baseCharSize = Math.min(cw * 0.50, (safeH * 0.76) / totalItems) * fontScale;
+          const charFontSize = Math.max(10, Math.round(baseCharSize));
+
+          if (hasStamp) {
+            vLines.push({ type: 'stamp', stamp: currentStamp, size: charFontSize });
+          }
+          chars.forEach((chStr) => {
+            vLines.push({ text: chStr, font: `${fw} ${charFontSize}px ${font}`, maxW: safeW, maxH: safeH / totalItems });
+          });
+
+          const charGap = Math.max(4, Math.round(charFontSize * 0.14));
+          drawPixelCenteredLines(ctx, cw, ch, cw / 2, ch / 2, vLines, charGap, safeH);
+        } else {
+          const hLines = [];
+          if (subTxt) {
+            const mainSize = Math.round(ch * 0.34 * fontScale);
+            const subSize = Math.round(ch * 0.15 * fontScale);
+            hLines.push({ stamp: currentStamp, text: mainTxt, font: `${fw} ${mainSize}px ${font}`, maxW: safeW, maxH: safeH * 0.58 });
+            hLines.push({ text: subTxt, font: `${fw} ${subSize}px ${font}`, maxW: safeW * 0.92, maxH: safeH * 0.28 });
+            drawPixelCenteredLines(ctx, cw, ch, cw / 2, ch / 2, hLines, Math.round(ch * 0.08), safeH);
+          } else {
+            const mainSize = Math.round(ch * 0.44 * fontScale);
+            hLines.push({ stamp: currentStamp, text: mainTxt, font: `${fw} ${mainSize}px ${font}`, maxW: safeW, maxH: safeH * 0.78 });
+            drawPixelCenteredLines(ctx, cw, ch, cw / 2, ch / 2, hLines, 0, safeH);
+          }
+        }
+      } else if (currentMode === 'pet') {
+        // ─── 🐾 ペットモード（各行の横中心・全体の縦中心ともにピクセル完全中央揃え） ───
+        const petShape = document.getElementById('pet-shape') ? document.getElementById('pet-shape').value : 'round';
+        const name = (document.getElementById('pet-name').value || '').trim();
+        const frontTel = document.getElementById('pet-tel') ? document.getElementById('pet-tel').value.trim() : '';
+        const petHolePos = document.getElementById('pet-hole-pos') ? document.getElementById('pet-hole-pos').value : 'top';
+        const isRevEnabled = document.getElementById('pet-reverse-enable') ? document.getElementById('pet-reverse-enable').checked : false;
+        const hasPetFrame = document.getElementById('pet-frame') ? (document.getElementById('pet-frame').value === 'yes') : true;
+
+        const effW = (petShape === 'round' || petShape === 'square') ? Math.min(W, H) : W;
+        const effH = (petShape === 'round' || petShape === 'square') ? Math.min(W, H) : H;
+        const tw = effW * res;
+        const th = effH * res;
+
+        let cx = cw / 2;
+        let cy = ch / 2;
+        let safeW = (petShape === 'diamond') ? tw * 0.62 : (petShape === 'hex' ? tw * 0.70 : (petShape === 'round' ? tw * 0.74 : tw * 0.78));
+        let safeH = (petShape === 'diamond') ? th * 0.60 : (petShape === 'hex' ? th * 0.70 : (petShape === 'round' ? th * 0.72 : th * 0.74));
+
+        // 上部内側穴のときは、穴の下端〜下部フレーム内側の真ん中をターゲット中心にする
+        if (petHolePos === 'inside-top') {
+          const hh = effH / 2;
+          const holeDia = parseFloat(document.getElementById('pet-hole-dia').value) || 3.5;
+          const innerR = Math.min(Math.max(holeDia / 2, 0.8), 4.0);
+          const framePad = hasPetFrame ? 2.0 : 0;
+          const insetTop = (petShape === 'diamond' || petShape === 'hex') ? 4.5 : 2.8;
+          const holeY = hh - insetTop - framePad - 2.0;
+          const holeBottomMm = holeY - innerR - 1.2;
+          const bottomInnerMm = -hh + framePad + 1.5;
+          const centerMmY = (holeBottomMm + bottomInnerMm) / 2;
+          cy = ch / 2 - centerMmY * res;
+          safeH = Math.max(th * 0.42, (holeBottomMm - bottomInnerMm) * res * 0.86);
+        }
+
+        if (!isBackSide) {
+          // ─── 表面（Front Side） ───
+          const showFrontTel = (!isRevEnabled && frontTel.length > 0);
+          const pLines = [];
+          if (currentStamp && currentStamp !== 'none') {
+            const iconSize = Math.round(th * (showFrontTel ? 0.16 : 0.20) * fontScale);
+            pLines.push({ type: 'stamp', stamp: currentStamp, size: iconSize });
+          }
+          if (name) {
+            const nameBaseRatio = showFrontTel
+              ? (petShape === 'diamond' ? 0.22 : 0.25)
+              : (petShape === 'diamond' ? 0.28 : 0.34);
+            const nameSize = Math.round(th * nameBaseRatio * fontScale);
+            pLines.push({ text: name, font: `${fw} ${nameSize}px ${font}`, maxW: safeW, maxH: safeH * (showFrontTel ? 0.52 : 0.72) });
+          }
+
+          if (showFrontTel) {
+            const telRatio = (petShape === 'diamond') ? 0.12 : 0.14;
+            const telSize = Math.round(th * telRatio * fontScale);
+            const telDisplay = frontTel.toUpperCase().startsWith('TEL') ? frontTel : `TEL: ${frontTel}`;
+            pLines.push({ text: telDisplay, font: `900 ${telSize}px sans-serif`, maxW: safeW * 0.96, maxH: safeH * 0.26 });
+          }
+
+          const gapPx = Math.round(th * (pLines.length >= 3 ? 0.045 : 0.065));
+          drawPixelCenteredLines(ctx, cw, ch, cx, cy, pLines, gapPx, safeH);
+        } else {
+          // ─── 裏面（Back Side: 迷子札エングレーブ/エンボス） ───
+          const backTel = document.getElementById('pet-back-tel') ? document.getElementById('pet-back-tel').value.trim() : '';
+          const backSub = document.getElementById('pet-back-sub') ? document.getElementById('pet-back-sub').value.trim() : '';
+          const bLines = [];
+          if (backTel) {
+            const bTelSize = Math.round(th * (petShape === 'diamond' ? 0.15 : 0.18) * fontScale);
+            bLines.push({ text: backTel, font: `900 ${bTelSize}px sans-serif`, maxW: safeW, maxH: safeH * 0.45 });
+          }
+          if (backSub) {
+            const bSubSize = Math.round(th * (petShape === 'diamond' ? 0.11 : 0.13) * fontScale);
+            bLines.push({ text: backSub, font: `bold ${bSubSize}px sans-serif`, maxW: safeW * 0.95, maxH: safeH * 0.35 });
+          }
+          drawPixelCenteredLines(ctx, cw, ch, cx, cy, bLines, Math.round(th * 0.07), safeH);
+        }
+      } else if (currentMode === 'tag') {
+        // ─── 🔑 ネームタグモード（ピクセル完全中央揃え・フリー入力2行対応） ───
+        const tagShape = document.getElementById('tag-shape') ? document.getElementById('tag-shape').value : 'rect';
+        const txt = (document.getElementById('tag-text').value || '').trim();
+        const subTxt = document.getElementById('tag-sub') ? document.getElementById('tag-sub').value.trim() : '';
+        const tagHole = document.getElementById('tag-hole').value;
+        const hasTagFrame = document.getElementById('tag-frame') ? (document.getElementById('tag-frame').value === 'yes') : true;
+
+        const effW = (tagShape === 'round' || tagShape === 'square') ? Math.min(W, H) : W;
+        const effH = (tagShape === 'round' || tagShape === 'square') ? Math.min(W, H) : H;
+        const tw = effW * res;
+        const th = effH * res;
+
+        let cx = cw / 2;
+        let cy = ch / 2;
+        let safeW = tw * (tagShape === 'diamond' ? 0.64 : (tagShape === 'hex' ? 0.74 : (tagShape === 'round' ? 0.76 : 0.80)));
+        const safeH = th * (tagShape === 'diamond' ? 0.60 : 0.72);
+
+        // 左端内側穴のときは、穴の右端〜右フレーム内側の真ん中をターゲット中心にする
+        if (tagHole === 'inside-left') {
+          const hw = effW / 2;
+          const holeDia = parseFloat(document.getElementById('tag-hole-dia').value) || 4.5;
+          const innerR = Math.min(Math.max(holeDia / 2, 0.8), 4.0);
+          const framePad = hasTagFrame ? 2.2 : 0;
+          const shapePad = (tagShape === 'diamond') ? 6.5 : (tagShape === 'hex' ? 4.8 : 3.5);
+          const holeCenterX = -hw + shapePad + framePad + 2.2;
+          const holeRightMm = holeCenterX + innerR + 1.5;
+          const rightInnerMm = hw - framePad - (tagShape === 'diamond' ? 5.0 : (tagShape === 'hex' ? 3.5 : 2.5));
+          const centerMmX = (holeRightMm + rightInnerMm) / 2;
+          cx = cw / 2 + centerMmX * res;
+          safeW = Math.max(tw * 0.45, (rightInnerMm - holeRightMm) * res * 0.92);
+        }
+
+        const isHorizontalShape = (tagShape === 'rect' || tagShape === 'capsule' || tagShape === 'hex');
+        if (isHorizontalShape) {
+          // 横長タグ：スタンプはメインテキストの左隣に一体配置
+          if (subTxt) {
+            const mainRatio = 0.30;
+            const subRatio = 0.17;
+            const mainSize = Math.round(th * mainRatio * fontScale);
+            const subSize = Math.round(th * subRatio * fontScale);
+            drawPixelCenteredLines(ctx, cw, ch, cx, cy, [
+              { stamp: currentStamp, text: txt, font: `${fw} ${mainSize}px ${font}`, maxW: safeW, maxH: safeH * 0.56 },
+              { text: subTxt, font: `${fw} ${subSize}px ${font}`, maxW: safeW * 0.94, maxH: safeH * 0.30 }
+            ], Math.round(th * 0.06), safeH);
+          } else {
+            const baseRatio = 0.42;
+            const fontSize = Math.round(th * baseRatio * fontScale);
+            drawPixelCenteredLines(ctx, cw, ch, cx, cy, [
+              { stamp: currentStamp, text: txt, font: `${fw} ${fontSize}px ${font}`, maxW: safeW, maxH: safeH }
+            ], 0, safeH);
+          }
+        } else {
+          // 丸型・四角・ひし形：スタンプは上段に配置
+          const lines = [];
+          if (currentStamp && currentStamp !== 'none') {
+            lines.push({ type: 'stamp', stamp: currentStamp, size: Math.round(th * 0.22 * fontScale) });
+          }
+          if (txt) {
+            const mainRatio = (tagShape === 'diamond') ? (subTxt ? 0.24 : 0.30) : (subTxt ? 0.24 : 0.30);
+            const fontSize = Math.round(th * mainRatio * fontScale);
+            lines.push({ text: txt, font: `${fw} ${fontSize}px ${font}`, maxW: safeW, maxH: safeH * (subTxt ? 0.44 : 0.60) });
+          }
+          if (subTxt) {
+            const subRatio = (tagShape === 'diamond') ? 0.13 : 0.14;
+            const subSize = Math.round(th * subRatio * fontScale);
+            lines.push({ text: subTxt, font: `${fw} ${subSize}px ${font}`, maxW: safeW * 0.92, maxH: safeH * 0.26 });
+          }
+          drawPixelCenteredLines(ctx, cw, ch, cx, cy, lines, Math.round(th * 0.06), safeH);
+        }
+      }
+
+      // 🌟 高精細・輪郭スムージング＆内部縦スジ完全除去メッシュ構築
+      const imgData = ctx.getImageData(0, 0, cw, ch).data;
+      const pixelW = boundW / cw;
+      const pixelH = boundH / ch;
+
+      let minZ = baseT;
+      let maxZ = baseT + topT;
+      if (isBackSide) {
+        const backStyle = (currentMode === 'pet' && document.getElementById('pet-back-style')) ? document.getElementById('pet-back-style').value : 'emboss';
+        if (backStyle === 'engrave') {
+          minZ = -0.06;
+          maxZ = Math.min(topT, baseT * 0.5);
+        } else {
+          minZ = -topT;
+          maxZ = 0;
+        }
+      }
+
+      const mask = new Uint8Array(cw * ch);
+      if (isBackSide) {
+        // 裏面は左右反転してマスク化（法線と頂点順序を表面と完全統一）
+        for (let y = 0; y < ch; y++) {
+          const rowOff = y * cw;
+          for (let x = 0; x < cw; x++) {
+            mask[rowOff + (cw - 1 - x)] = (imgData[(rowOff + x) * 4] > 128) ? 1 : 0;
+          }
+        }
+      } else {
+        for (let i = 0; i < cw * ch; i++) {
+          mask[i] = (imgData[i * 4] > 128) ? 1 : 0;
+        }
+      }
+
+      const gw = cw + 1;
+      const gh = ch + 1;
+      const numG = gw * gh;
+      const gxArr = new Float32Array(numG);
+      const gyArr = new Float32Array(numG);
+      const origX = new Float32Array(numG);
+      const origY = new Float32Array(numG);
+
+      for (let gy = 0; gy < gh; gy++) {
+        const py = boundH / 2 - gy * pixelH;
+        const rowG = gy * gw;
+        for (let gx = 0; gx < gw; gx++) {
+          const px = -boundW / 2 + gx * pixelW;
+          gxArr[rowG + gx] = px;
+          gyArr[rowG + gx] = py;
+          origX[rowG + gx] = px;
+          origY[rowG + gx] = py;
+        }
+      }
+
+      // 外周・内周の境界エッジ（白ピクセルと黒ピクセルの境目のみ）を抽出
+      const isBoundary = new Uint8Array(numG);
+      const degIn = new Uint8Array(numG);
+      const degOut = new Uint8Array(numG);
+      const prevVert = new Int32Array(numG).fill(-1);
+      const nextVert = new Int32Array(numG).fill(-1);
+      const boundaryEdgesU = [];
+      const boundaryEdgesV = [];
+
+      function addBoundaryEdge(u, v) {
+        boundaryEdgesU.push(u);
+        boundaryEdgesV.push(v);
+        isBoundary[u] = 1;
+        isBoundary[v] = 1;
+        if (degOut[u] < 2) degOut[u]++;
+        if (degIn[v] < 2) degIn[v]++;
+        nextVert[u] = v;
+        prevVert[v] = u;
+      }
+
+      for (let y = 0; y < ch; y++) {
+        const rowOff = y * cw;
+        const gRow = y * gw;
+        const gNextRow = (y + 1) * gw;
+        for (let x = 0; x < cw; x++) {
+          if (mask[rowOff + x] !== 1) continue;
+          const vTL = gRow + x;
+          const vTR = gRow + x + 1;
+          const vBR = gNextRow + x + 1;
+          const vBL = gNextRow + x;
+
+          // 上(North): TR -> TL
+          if (y === 0 || mask[(y - 1) * cw + x] === 0) addBoundaryEdge(vTR, vTL);
+          // 下(South): BL -> BR
+          if (y === ch - 1 || mask[(y + 1) * cw + x] === 0) addBoundaryEdge(vBL, vBR);
+          // 右(East): BR -> TR
+          if (x === cw - 1 || mask[rowOff + x + 1] === 0) addBoundaryEdge(vBR, vTR);
+          // 左(West): TL -> BL
+          if (x === 0 || mask[rowOff + x - 1] === 0) addBoundaryEdge(vTL, vBL);
+        }
+      }
+
+      // 境界頂点の輪郭スムージング（階段状のギザギザを滑らかな斜線・曲線へ補間）
+      const smoothVerts = [];
+      for (let v = 0; v < numG; v++) {
+        if (degIn[v] === 1 && degOut[v] === 1) smoothVerts.push(v);
+      }
+      const tmpX = new Float32Array(numG);
+      const tmpY = new Float32Array(numG);
+      const maxShiftX = pixelW * 0.46;
+      const maxShiftY = pixelH * 0.46;
+
+      for (let pass = 0; pass < 4; pass++) {
+        for (let i = 0; i < smoothVerts.length; i++) {
+          const v = smoothVerts[i];
+          const p = prevVert[v];
+          const n = nextVert[v];
+          const tx = 0.5 * (gxArr[p] + gxArr[n]);
+          const ty = 0.5 * (gyArr[p] + gyArr[n]);
+          let nx = gxArr[v] + 0.45 * (tx - gxArr[v]);
+          let ny = gyArr[v] + 0.45 * (ty - gyArr[v]);
+          nx = Math.max(origX[v] - maxShiftX, Math.min(origX[v] + maxShiftX, nx));
+          ny = Math.max(origY[v] - maxShiftY, Math.min(origY[v] + maxShiftY, ny));
+          tmpX[v] = nx;
+          tmpY[v] = ny;
+        }
+        for (let i = 0; i < smoothVerts.length; i++) {
+          const v = smoothVerts[i];
+          gxArr[v] = tmpX[v];
+          gyArr[v] = tmpY[v];
+        }
+      }
+
+      const positions = [];
+      const normals = [];
+      const indices = [];
+      let vOffset = 0;
+
+      // 上面(+Z)と下面(-Z)のみを追加（文字内部の余計な縦壁・横壁を一切作らないため縦スジがゼロになる）
+      function addTopBottomQuad(xBL, yBL, xBR, yBR, xTR, yTR, xTL, yTL) {
+        // 1. +Z (上面)
+        positions.push(xBL, yBL, maxZ, xBR, yBR, maxZ, xTR, yTR, maxZ, xTL, yTL, maxZ);
+        normals.push(0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1);
+        indices.push(vOffset, vOffset + 1, vOffset + 2, vOffset, vOffset + 2, vOffset + 3);
+        vOffset += 4;
+
+        // 2. -Z (底面)
+        positions.push(xBR, yBR, minZ, xBL, yBL, minZ, xTL, yTL, minZ, xTR, yTR, minZ);
+        normals.push(0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1);
+        indices.push(vOffset, vOffset + 1, vOffset + 2, vOffset, vOffset + 2, vOffset + 3);
+        vOffset += 4;
+      }
+
+      // 全白ピクセルセルの上面(+Z)・底面(-Z)をスムージング済み頂点で生成（Tジャンクション・オープンエッジ完全ゼロ）
+      for (let y = 0; y < ch; y++) {
+        const rowOff = y * cw;
+        const gRow = y * gw;
+        const gNextRow = (y + 1) * gw;
+        for (let x = 0; x < cw; x++) {
+          if (mask[rowOff + x] !== 1) continue;
+          const vTL = gRow + x;
+          const vTR = gRow + x + 1;
+          const vBR = gNextRow + x + 1;
+          const vBL = gNextRow + x;
+          addTopBottomQuad(
+            gxArr[vBL], gyArr[vBL],
+            gxArr[vBR], gyArr[vBR],
+            gxArr[vTR], gyArr[vTR],
+            gxArr[vTL], gyArr[vTL]
+          );
+        }
+      }
+
+      // 外周・内周の境界エッジにのみ滑らかな側壁を生成
+      for (let i = 0; i < boundaryEdgesU.length; i++) {
+        const u = boundaryEdgesU[i];
+        const v = boundaryEdgesV[i];
+        const x1 = gxArr[u], y1 = gyArr[u];
+        const x2 = gxArr[v], y2 = gyArr[v];
+        const dx = x2 - x1, dy = y2 - y1;
+        const len = Math.hypot(dx, dy) || 1;
+        const nx = dy / len;
+        const ny = -dx / len;
+
+        positions.push(x1, y1, minZ, x2, y2, minZ, x2, y2, maxZ, x1, y1, maxZ);
+        normals.push(nx, ny, 0, nx, ny, 0, nx, ny, 0, nx, ny, 0);
+        indices.push(vOffset, vOffset + 1, vOffset + 2, vOffset, vOffset + 2, vOffset + 3);
+        vOffset += 4;
+      }
+
+      if (positions.length > 0) {
+        const topGeo = new THREE.BufferGeometry();
+        topGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        topGeo.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+        topGeo.setIndex(indices);
+        const batchTopMesh = new THREE.Mesh(topGeo, topMat);
+        topGroup.add(batchTopMesh);
+      }
+    }
+
+    function resetCamera() {
+      camera.up.set(0, 1, 0);
+      camera.position.set(0, -20, 125);
+      controls.target.set(0, 0, 0);
+      controls.update();
+      isFlipped = false;
+      applyFlipTransform();
+    }
+
+    function savePlanState() {
+      try {
+        localStorage.setItem('3d_studio_plan_tier', planTier);
+        localStorage.setItem('3d_studio_ticket_count', String(ticketRemaining));
+        sessionStorage.setItem('3d_studio_plan_tier', planTier);
+        sessionStorage.setItem('3d_studio_ticket_count', String(ticketRemaining));
+      } catch (e) {}
+    }
+
+    function openExportModal(type) {
+      pendingExportType = type;
+      applyProPlanUI();
+      document.getElementById('export-modal').classList.remove('hidden');
+    }
+
+    function openPricingModal() {
+      pendingExportType = '3mf';
+      applyProPlanUI();
+      document.getElementById('export-modal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('export-modal').classList.add('hidden');
+    }
+
+    function applyProPlanUI() {
+      if (planTier === 'ticket' && ticketRemaining <= 0) {
+        planTier = 'free';
+        ticketRemaining = 0;
+        savePlanState();
+      }
+      isProUser = (planTier === 'ticket' || planTier === 'pro');
+
+      // 全モードで文字入力・QR入力・フォント選択を100%解放（自由体験で愛着を深め、出力時のみ課金へ誘導）
+      const textInputIds = [
+        'qr-url', 'qr-top-text', 'qr-bottom-text',
+        'jp-text', 'jp-text-sub', 'jp-text-back',
+        'pet-name', 'pet-tel', 'pet-back-tel', 'pet-back-sub',
+        'tag-text', 'tag-sub'
+      ];
+      textInputIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.readOnly = false;
+          el.classList.remove('opacity-60', 'cursor-not-allowed', 'bg-slate-950');
+          el.classList.add('bg-slate-900');
+          el.title = '';
+        }
+      });
+
+      const fontSelect = document.getElementById('font-family');
+      if (fontSelect) {
+        fontSelect.disabled = false;
+        fontSelect.classList.remove('opacity-60', 'cursor-not-allowed', 'bg-slate-950');
+        fontSelect.classList.add('bg-slate-900');
+      }
+
+      const toggleBtn = document.getElementById('btn-plan-toggle');
+      const proBtn = document.getElementById('btn-pro-plan');
+
+      if (planTier === 'ticket') {
+        if (toggleBtn) {
+          toggleBtn.className = 'text-xs bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/50 font-bold px-2.5 py-1 rounded transition';
+          toggleBtn.innerText = isEnglish
+            ? `🎫 5-Ticket Active (${ticketRemaining} left)`
+            : `🎫 5回チケット適用中（残り ${ticketRemaining}回）`;
+        }
+        if (proBtn) {
+          proBtn.innerText = isEnglish
+            ? `🎫 ${ticketRemaining} Left (Plans)`
+            : `🎫 残り${ticketRemaining}回（プラン確認）`;
+        }
+      } else if (planTier === 'pro') {
+        if (toggleBtn) {
+          toggleBtn.className = 'text-xs bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 font-bold px-2.5 py-1 rounded transition';
+          toggleBtn.innerText = isEnglish
+            ? '👑 Unlimited PRO (Commercial OK)'
+            : '👑 PRO作り放題（無制限・商用OK）';
+        }
+        if (proBtn) {
+          proBtn.innerText = isEnglish ? '👑 PRO Active (Commercial OK)' : '👑 PROプラン適用中';
+        }
+      } else {
+        if (toggleBtn) {
+          toggleBtn.className = 'text-xs bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40 font-bold px-2.5 py-1 rounded transition';
+          toggleBtn.innerText = isEnglish
+            ? '🎁 Free Trial (Input Free • DL Ticket Required)'
+            : '🎁 無料体験中（入力自由・保存のみチケット制）';
+        }
+        if (proBtn) {
+          proBtn.innerText = isEnglish ? '✨ Plans & Commercial License' : '✨ 料金プラン (商用OK)';
+        }
+      }
+
+      // モーダル内のステータス表示とダウンロードボタン連動
+      const statusBadge = document.getElementById('lbl-modal-current-status');
+      const dlBtn = document.getElementById('lbl-modal-btn-download');
+      const cardFree = document.getElementById('card-plan-free');
+      const cardTicket = document.getElementById('card-plan-ticket');
+      const cardPro = document.getElementById('card-plan-pro');
+      const extLabel = pendingExportType === '3mf' ? '.3mf' : '.stl';
+
+      if (cardFree && cardTicket && cardPro) {
+        cardFree.className = planTier === 'free'
+          ? 'p-3 rounded-lg border-2 border-slate-400 bg-slate-800/80 cursor-pointer transition flex justify-between items-center gap-2'
+          : 'p-3 rounded-lg border border-slate-700 bg-slate-950/80 hover:border-slate-500 cursor-pointer transition flex justify-between items-center gap-2 opacity-80';
+        cardTicket.className = planTier === 'ticket'
+          ? 'p-3.5 rounded-lg border-2 border-sky-400 bg-sky-500/20 cursor-pointer transition flex justify-between items-center gap-2 relative shadow-lg'
+          : 'p-3.5 rounded-lg border-2 border-sky-500/60 bg-sky-500/10 hover:bg-sky-500/20 cursor-pointer transition flex justify-between items-center gap-2 relative';
+        cardPro.className = planTier === 'pro'
+          ? 'p-3.5 rounded-lg border-2 border-amber-400 bg-amber-500/20 cursor-pointer transition flex justify-between items-center gap-2 relative shadow-lg'
+          : 'p-3.5 rounded-lg border-2 border-amber-500/70 bg-amber-500/10 hover:bg-amber-500/20 cursor-pointer transition flex justify-between items-center gap-2 relative';
+      }
+
+      if (planTier === 'free') {
+        if (statusBadge) {
+          statusBadge.className = 'text-[11px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-600';
+          statusBadge.innerText = isEnglish ? 'Current: Free ($0)' : '現在：お試し（Free・0円）';
+        }
+        if (dlBtn) {
+          dlBtn.className = 'w-full bg-slate-800 text-slate-400 border border-slate-700 font-bold py-3 px-3 rounded-lg transition text-xs sm:text-sm mb-2 cursor-not-allowed';
+          dlBtn.innerText = isEnglish
+            ? '🔒 3MF / STL Export Disabled in Free Trial (Select 5-Ticket or PRO Plan above)'
+            : '🔒 お試し（Free）では3MF・STLデータの出力はできません（上のチケットまたはPROを選択）';
+        }
+      } else if (planTier === 'ticket') {
+        if (statusBadge) {
+          statusBadge.className = 'text-[11px] font-bold px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/40';
+          statusBadge.innerText = isEnglish
+            ? `Current: 5-Ticket (${ticketRemaining} left)`
+            : `現在：5回チケット（残り ${ticketRemaining}回）`;
+        }
+        if (dlBtn) {
+          dlBtn.className = 'w-full bg-gradient-to-r from-sky-400 to-blue-500 hover:from-sky-300 hover:to-blue-400 text-slate-950 font-extrabold py-3 px-3 rounded-lg shadow-lg transition text-xs sm:text-sm mb-2';
+          dlBtn.innerText = isEnglish
+            ? `🎫 Use 1 Ticket & Download ${extLabel} (${ticketRemaining} left ➔ ${ticketRemaining - 1})`
+            : `🎫 チケットを1回使ってダウンロード (${extLabel})（残り ${ticketRemaining}回 ➔ ${ticketRemaining - 1}回）`;
+        }
+      } else {
+        if (statusBadge) {
+          statusBadge.className = 'text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+          statusBadge.innerText = isEnglish ? 'Current: Unlimited PRO' : '現在：PRO作り放題（無制限）';
+        }
+        if (dlBtn) {
+          dlBtn.className = 'w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold py-3 px-3 rounded-lg shadow-lg transition text-xs sm:text-sm mb-2';
+          dlBtn.innerText = isEnglish
+            ? `👑 Unlimited PRO: Instant Download (${extLabel})`
+            : `👑 PRO作り放題：今すぐダウンロード (${extLabel}・無制限)`;
+        }
+      }
+    }
+
+    // ヘッダーボタンで3段階（お試しFree ➔ 5回チケット ➔ PRO作り放題）をワンクリック順送り体感
+    function toggleProPlanMode() {
+      if (planTier === 'free') {
+        planTier = 'ticket';
+        if (ticketRemaining <= 0) ticketRemaining = 5;
+      } else if (planTier === 'ticket') {
+        planTier = 'pro';
+      } else {
+        planTier = 'free';
+      }
+      savePlanState();
+      applyProPlanUI();
+    }
+
+    function selectPlanForTest(tier) {
+      planTier = tier;
+      if (tier === 'ticket' && ticketRemaining <= 0) {
+        ticketRemaining = 5;
+      }
+      savePlanState();
+      applyProPlanUI();
+    }
+
+    function handleSelectTicketPlan() {
+      if (STRIPE_TICKET_URL) {
+        window.open(STRIPE_TICKET_URL, '_blank');
+        return;
+      }
+      planTier = 'ticket';
+      ticketRemaining = 5;
+      savePlanState();
+      applyProPlanUI();
+    }
+
+    function handleSelectProPlan() {
+      if (STRIPE_PRO_URL) {
+        window.open(STRIPE_PRO_URL, '_blank');
+        return;
+      }
+      planTier = 'pro';
+      savePlanState();
+      applyProPlanUI();
+    }
+
+    function activateProFromModal() {
+      handleSelectProPlan();
+    }
+
+    // 🔐 管理者用暗号シリアルコード生成＆使い捨て検証システム
+    const SECRET_SALT = '3D_STUDIO_SALT_2026';
+
+    function generateSerialSignature(type, randId) {
+      const raw = `${type}_${randId}_${SECRET_SALT}`;
+      let hash = 0;
+      for (let i = 0; i < raw.length; i++) {
+        hash = ((hash << 5) - hash) + raw.charCodeAt(i);
+        hash |= 0;
+      }
+      return Math.abs(hash).toString(36).toUpperCase().padStart(4, '0').slice(-4);
+    }
+
+    function adminGenerateCode(type) {
+      const randNum = Math.floor(1000 + Math.random() * 9000);
+      const prefix = type === 'pro' ? 'PRO' : 'TK5';
+      const sig = generateSerialSignature(prefix, randNum);
+      const fullCode = `${prefix}-${randNum}-${sig}`;
+
+      const codeBox = document.getElementById('admin-last-code-box');
+      const codeSpan = document.getElementById('admin-generated-code');
+      const passInput = document.getElementById('pro-passcode-input');
+      if (codeBox) codeBox.classList.remove('hidden');
+      if (codeSpan) codeSpan.innerText = fullCode;
+      if (passInput) passInput.value = fullCode;
+    }
+
+    function isSerialUsed(code) {
+      try {
+        const used = JSON.parse(localStorage.getItem('3d_studio_used_serials') || '[]');
+        return used.includes(code);
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function markSerialUsed(code) {
+      try {
+        const used = JSON.parse(localStorage.getItem('3d_studio_used_serials') || '[]');
+        if (!used.includes(code)) {
+          used.push(code);
+          localStorage.setItem('3d_studio_used_serials', JSON.stringify(used));
+        }
+      } catch (e) {}
+    }
+
+    function applyPasscode() {
+      const input = document.getElementById('pro-passcode-input');
+      if (!input) return;
+      const code = input.value.trim().toUpperCase();
+      if (!code) return;
+
+      // 1. レガシー固定テストコードの判定
+      if (code === 'PRO2026' || code === 'PRO') {
+        planTier = 'pro';
+        savePlanState();
+        applyProPlanUI();
+        input.value = '';
+        alert(isEnglish ? '👑 Unlimited PRO Plan (Commercial License) unlocked!' : '👑 PRO作り放題プラン（商用ライセンス付）が解放されました！');
+        return;
+      } else if (code === 'TICKET5' || code === 'TICKET') {
+        planTier = 'ticket';
+        ticketRemaining = Math.max(0, ticketRemaining) + 5;
+        savePlanState();
+        applyProPlanUI();
+        input.value = '';
+        alert(isEnglish ? `🎫 5-Design Ticket applied! (Remaining exports: ${ticketRemaining})` : `🎫 カスタム作成 5回チケットを適用しました！（残り出力回数: ${ticketRemaining}回）`);
+        return;
+      }
+
+      // 2. 使い捨てシリアルコード形式（例: TK5-8492-X7K / PRO-3194-Q9W）の判定
+      const parts = code.split('-');
+      if (parts.length === 3) {
+        const prefix = parts[0];
+        const randId = parts[1];
+        const sig = parts[2];
+        const validSig = generateSerialSignature(prefix, randId);
+
+        if (sig === validSig) {
+          // すでに使われたコードかチェック
+          if (isSerialUsed(code)) {
+            alert(isEnglish ? '⚠️ This serial code has already been used on this device.' : '⚠️ このシリアルコードは既にこの端末で使用済みです（二重利用はできません）。');
+            return;
+          }
+
+          // コードを使用済みに記録
+          markSerialUsed(code);
+
+          if (prefix === 'PRO') {
+            planTier = 'pro';
+            savePlanState();
+            applyProPlanUI();
+            input.value = '';
+            alert(isEnglish ? '👑 [Serial Validated] Unlimited PRO Plan unlocked!' : '👑 【シリアル認証完了】PRO作り放題プラン（商用ライセンス付）が解放されました！');
+          } else if (prefix === 'TK5') {
+            planTier = 'ticket';
+            ticketRemaining = Math.max(0, ticketRemaining) + 5;
+            savePlanState();
+            applyProPlanUI();
+            input.value = '';
+            alert(isEnglish ? `🎫 [Serial Validated] 5-Design Ticket applied! (${ticketRemaining} left)` : `🎫 【シリアル認証完了】5回チケットがチャージされました！（残り回数: ${ticketRemaining}回）`);
+          }
+          return;
+        }
+      }
+
+      alert(isEnglish ? 'Invalid passcode. Please check your serial code.' : 'パスコード（シリアルコード）が正しくありません。');
+    }
+
+    // 🌟 純粋JSによる無圧縮ZIP生成（Bambu Studio / PrusaSlicer / OrcaSlicer 用 2色3MFパッケージ作成）
+    let crc32Table = null;
+    function calcCRC32(bytes) {
+      if (!crc32Table) {
+        crc32Table = new Uint32Array(256);
+        for (let i = 0; i < 256; i++) {
+          let c = i;
+          for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+          crc32Table[i] = c >>> 0;
+        }
+      }
+      let crc = 0xFFFFFFFF;
+      for (let i = 0; i < bytes.length; i++) {
+        crc = crc32Table[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+      }
+      return (crc ^ 0xFFFFFFFF) >>> 0;
+    }
+
+    function createZipBlob(files) {
+      const enc = new TextEncoder();
+      const localParts = [];
+      const centralParts = [];
+      let offset = 0;
+
+      for (const f of files) {
+        const nameBytes = enc.encode(f.name);
+        const data = (typeof f.data === 'string') ? enc.encode(f.data) : f.data;
+        const crc = calcCRC32(data);
+        const len = data.length;
+
+        const lfh = new Uint8Array(30 + nameBytes.length);
+        const ldv = new DataView(lfh.buffer);
+        ldv.setUint32(0, 0x04034b50, true);
+        ldv.setUint16(4, 20, true);
+        ldv.setUint16(6, 0x0800, true);
+        ldv.setUint16(8, 0, true);
+        ldv.setUint16(10, 0, true);
+        ldv.setUint16(12, 0, true);
+        ldv.setUint32(14, crc, true);
+        ldv.setUint32(18, len, true);
+        ldv.setUint32(22, len, true);
+        ldv.setUint16(26, nameBytes.length, true);
+        ldv.setUint16(28, 0, true);
+        lfh.set(nameBytes, 30);
+
+        localParts.push(lfh, data);
+
+        const cdh = new Uint8Array(46 + nameBytes.length);
+        const cdv = new DataView(cdh.buffer);
+        cdv.setUint32(0, 0x02014b50, true);
+        cdv.setUint16(4, 20, true);
+        cdv.setUint16(6, 20, true);
+        cdv.setUint16(8, 0x0800, true);
+        cdv.setUint16(10, 0, true);
+        cdv.setUint16(12, 0, true);
+        cdv.setUint16(14, 0, true);
+        cdv.setUint32(16, crc, true);
+        cdv.setUint32(20, len, true);
+        cdv.setUint32(24, len, true);
+        cdv.setUint16(28, nameBytes.length, true);
+        cdv.setUint16(30, 0, true);
+        cdv.setUint16(32, 0, true);
+        cdv.setUint16(34, 0, true);
+        cdv.setUint16(36, 0, true);
+        cdv.setUint32(38, 0, true);
+        cdv.setUint32(42, offset, true);
+        cdh.set(nameBytes, 46);
+
+        centralParts.push(cdh);
+        offset += lfh.length + len;
+      }
+
+      let cdSize = 0;
+      for (const c of centralParts) cdSize += c.length;
+
+      const eocd = new Uint8Array(22);
+      const edv = new DataView(eocd.buffer);
+      edv.setUint32(0, 0x06054b50, true);
+      edv.setUint16(4, 0, true);
+      edv.setUint16(6, 0, true);
+      edv.setUint16(8, files.length, true);
+      edv.setUint16(10, files.length, true);
+      edv.setUint32(12, cdSize, true);
+      edv.setUint32(16, offset, true);
+      edv.setUint16(20, 0, true);
+
+      return new Blob([...localParts, ...centralParts, eocd], { type: 'application/vnd.ms-package.3dmanufacturing-3dmodel+xml' });
+    }
+
+    function extractGroupMeshXML(group, matIndex) {
+      const verts = [];
+      const tris = [];
+      let vOffset = 0;
+      const tmpV = new THREE.Vector3();
+
+      group.traverse((child) => {
+        if (!child.isMesh || !child.geometry) return;
+        child.updateMatrix();
+        const geo = child.geometry;
+        const pos = geo.attributes.position;
+        if (!pos || pos.count === 0) return;
+
+        const idx = geo.index;
+        const meshMap = new Map();
+        const remap = new Int32Array(pos.count);
+        for (let i = 0; i < pos.count; i++) {
+          tmpV.fromBufferAttribute(pos, i).applyMatrix4(child.matrix);
+          const key = `${tmpV.x.toFixed(4)},${tmpV.y.toFixed(4)},${tmpV.z.toFixed(4)}`;
+          let mIdx = meshMap.get(key);
+          if (mIdx === undefined) {
+            mIdx = vOffset++;
+            meshMap.set(key, mIdx);
+            verts.push(`          <vertex x="${tmpV.x.toFixed(4)}" y="${tmpV.y.toFixed(4)}" z="${tmpV.z.toFixed(4)}"/>`);
+          }
+          remap[i] = mIdx;
+        }
+        const paintAttr = matIndex === 1 ? ' paint_color="8"' : ' paint_color="4"';
+        if (idx) {
+          for (let i = 0; i < idx.count; i += 3) {
+            const v1 = remap[idx.getX(i)];
+            const v2 = remap[idx.getX(i + 1)];
+            const v3 = remap[idx.getX(i + 2)];
+            if (v1 !== v2 && v2 !== v3 && v1 !== v3) {
+              tris.push(`          <triangle v1="${v1}" v2="${v2}" v3="${v3}" pid="1" p1="${matIndex}"${paintAttr}/>`);
+            }
+          }
+        } else {
+          for (let i = 0; i < pos.count; i += 3) {
+            const v1 = remap[i];
+            const v2 = remap[i + 1];
+            const v3 = remap[i + 2];
+            if (v1 !== v2 && v2 !== v3 && v1 !== v3) {
+              tris.push(`          <triangle v1="${v1}" v2="${v2}" v3="${v3}" pid="1" p1="${matIndex}"${paintAttr}/>`);
+            }
+          }
+        }
+      });
+
+      return { verts, tris, hasMesh: tris.length > 0 };
+    }
+
+    function export3MFBlob() {
+      const colBaseHex = (document.getElementById('col-base').value || '#f8fafc').toUpperCase();
+      const colTopHex = (document.getElementById('col-top').value || '#0f172a').toUpperCase();
+
+      const baseMeshData = extractGroupMeshXML(baseGroup, 0);
+      const topMeshData = extractGroupMeshXML(topGroup, 1);
+
+      const contentTypesXml = `<?xml version="1.0" encoding="UTF-8"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/>
+</Types>`;
+
+      const relsXml = `<?xml version="1.0" encoding="UTF-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Target="/3D/3dmodel.model" Id="rel-1" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>
+</Relationships>`;
+
+      let objectsXml = `    <object id="2" name="Base_Part" type="model" pid="1" pindex="0">
+      <mesh>
+        <vertices>
+${baseMeshData.verts.join('\n')}
+        </vertices>
+        <triangles>
+${baseMeshData.tris.join('\n')}
+        </triangles>
+      </mesh>
+    </object>\n`;
+
+      let componentsXml = `        <component objectid="2"/>\n`;
+
+      if (topMeshData.hasMesh) {
+        objectsXml += `    <object id="3" name="Text_Part" type="model" pid="1" pindex="1">
+      <mesh>
+        <vertices>
+${topMeshData.verts.join('\n')}
+        </vertices>
+        <triangles>
+${topMeshData.tris.join('\n')}
+        </triangles>
+      </mesh>
+    </object>\n`;
+        componentsXml += `        <component objectid="3"/>\n`;
+      }
+
+      const modelXml = `<?xml version="1.0" encoding="UTF-8"?>
+<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">
+  <resources>
+    <basematerials id="1">
+      <base name="Base_Color" displaycolor="${colBaseHex}FF"/>
+      <base name="Top_Color" displaycolor="${colTopHex}FF"/>
+    </basematerials>
+${objectsXml}    <object id="4" name="3D_Sign_Tag" type="model">
+      <components>
+${componentsXml}      </components>
+    </object>
+  </resources>
+  <build>
+    <item objectid="4"/>
+  </build>
+</model>`;
+
+      return createZipBlob([
+        { name: '[Content_Types].xml', data: contentTypesXml },
+        { name: '_rels/.rels', data: relsXml },
+        { name: '3D/3dmodel.model', data: modelXml }
+      ]);
+    }
+
+    function executeDownload() {
+      // お試し（Free）モードでは3MF・STL出力をブロックし、プラン選択を促す
+      if (planTier === 'free') {
+        const cardTicket = document.getElementById('card-plan-ticket');
+        const cardPro = document.getElementById('card-plan-pro');
+        if (cardTicket) cardTicket.classList.add('ring-2', 'ring-sky-400');
+        if (cardPro) cardPro.classList.add('ring-2', 'ring-amber-400');
+        setTimeout(() => {
+          if (cardTicket) cardTicket.classList.remove('ring-2', 'ring-sky-400');
+          if (cardPro) cardPro.classList.remove('ring-2', 'ring-amber-400');
+        }, 1200);
+        alert(
+          isEnglish
+            ? '🔒 3MF & STL export is disabled in the Free Trial ($0).\nPlease click "5-Design Custom Ticket ($3.99)" or "Unlimited PRO Plan ($16.99/mo)" above to unlock custom text & file export!'
+            : '🔒 お試し（Free：0円）では3MF・STLデータの出力はできません。\n上の「カスタム作成 5回チケット（¥600）」または「PRO作り放題プラン（¥2,500/月）」をクリックして解放してください！'
+        );
+        return;
+      }
+
+      if (planTier === 'ticket' && ticketRemaining <= 0) {
+        planTier = 'free';
+        savePlanState();
+        applyProPlanUI();
+        return;
+      }
+
+      // 裏面確認中であっても常におもて面が上(Z>=0)の正しい向きで書き出す
+      const prevFlip = isFlipped;
+      isFlipped = false;
+      applyFlipTransform();
+      fullGroup.updateMatrixWorld(true);
+
+      if (pendingExportType === '3mf') {
+        const blob = export3MFBlob();
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `3d_${currentMode}_2color_${Date.now()}.3mf`;
+        link.click();
+      } else {
+        const exporter = new THREE.STLExporter();
+        let targetObj = fullGroup;
+        let suffix = 'all';
+        if (pendingExportType === 'base') { targetObj = baseGroup; suffix = 'base'; }
+        if (pendingExportType === 'top') { targetObj = topGroup; suffix = 'top'; }
+
+        const result = exporter.parse(targetObj, { binary: true });
+        const blob = new Blob([result], { type: 'application/octet-stream' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `3d_${currentMode}_${suffix}_${Date.now()}.stl`;
+        link.click();
+      }
+
+      isFlipped = prevFlip;
+      applyFlipTransform();
+
+      // 5回デザインチケットの場合は1回分消費し、0になったら自動でお試し(Free)へ戻す
+      if (planTier === 'ticket') {
+        ticketRemaining = Math.max(0, ticketRemaining - 1);
+        if (ticketRemaining <= 0) {
+          planTier = 'free';
+        }
+        savePlanState();
+        applyProPlanUI();
+      }
+
+      closeModal();
+    }
+
+    function copyShareLink() {
+      const params = new URLSearchParams({
+        m: currentMode,
+        w: document.getElementById('size-w').value,
+        h: document.getElementById('size-h').value,
+        fs: document.getElementById('font-scale') ? document.getElementById('font-scale').value : '100',
+        jt: document.getElementById('jp-text').value,
+        js: document.getElementById('jp-text-sub') ? document.getElementById('jp-text-sub').value : '',
+        jf: document.getElementById('jp-frame').value,
+        tt: document.getElementById('tag-text').value,
+        tsub: document.getElementById('tag-sub') ? document.getElementById('tag-sub').value : '',
+        ts: document.getElementById('tag-shape') ? document.getElementById('tag-shape').value : 'rect',
+        tf: document.getElementById('tag-frame') ? document.getElementById('tag-frame').value : 'yes',
+        pn: document.getElementById('pet-name').value,
+        pt: document.getElementById('pet-tel').value,
+        ps: document.getElementById('pet-shape').value,
+        pf: document.getElementById('pet-frame') ? document.getElementById('pet-frame').value : 'yes',
+        php: document.getElementById('pet-hole-pos').value,
+        pdec: currentPetDeco,
+        prev: document.getElementById('pet-reverse-enable').checked ? '1' : '0',
+        pbt: document.getElementById('pet-back-tel').value,
+        pbs: document.getElementById('pet-back-sub').value,
+        pbst: document.getElementById('pet-back-style').value,
+        qu: document.getElementById('qr-url').value,
+        qe: document.getElementById('qr-enable').value,
+        qf: document.getElementById('qr-frame').value,
+        st: currentStamp,
+        std: document.getElementById('stand-type').value
+      });
+      const shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+      navigator.clipboard.writeText(shareUrl);
+      const btn = document.getElementById('btn-share');
+      btn.innerText = isEnglish ? '✅ Design Share URL Copied!' : '✅ デザイン保存URLをコピーしました！';
+      setTimeout(() => { btn.innerText = isEnglish ? '🔗 Save Current Design to URL' : '🔗 現在のデザインをURLで保存（スマホ➔PC引き継ぎ用）'; }, 2500);
+    }
+
+    function loadParamsFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('fs') && document.getElementById('font-scale')) document.getElementById('font-scale').value = params.get('fs');
+      if (params.get('jt')) document.getElementById('jp-text').value = params.get('jt');
+      if (params.get('js') !== null && document.getElementById('jp-text-sub')) document.getElementById('jp-text-sub').value = params.get('js');
+      if (params.get('jf')) document.getElementById('jp-frame').value = params.get('jf');
+      if (params.get('tt')) document.getElementById('tag-text').value = params.get('tt');
+      if (params.get('tsub') !== null && document.getElementById('tag-sub')) document.getElementById('tag-sub').value = params.get('tsub');
+      if (params.get('ts') && document.getElementById('tag-shape')) {
+        const tsVal = params.get('ts');
+        document.getElementById('tag-shape').value = VALID_PET_SHAPES.includes(tsVal) ? tsVal : 'rect';
+        onTagShapeSelectChanged();
+      }
+      if (params.get('tf') && document.getElementById('tag-frame')) {
+        document.getElementById('tag-frame').value = params.get('tf');
+      }
+      if (params.get('pn')) document.getElementById('pet-name').value = params.get('pn');
+      if (params.get('pt')) document.getElementById('pet-tel').value = params.get('pt');
+      if (params.get('ps')) {
+        const psVal = params.get('ps');
+        document.getElementById('pet-shape').value = VALID_PET_SHAPES.includes(psVal) ? psVal : 'round';
+        onPetShapeSelectChanged();
+      }
+      if (params.get('pf') && document.getElementById('pet-frame')) {
+        document.getElementById('pet-frame').value = params.get('pf');
+      }
+      if (params.get('php')) document.getElementById('pet-hole-pos').value = params.get('php');
+      if (params.get('pdec')) setPetDeco(params.get('pdec'));
+      if (params.get('prev')) {
+        document.getElementById('pet-reverse-enable').checked = (params.get('prev') === '1');
+        togglePetReverseUI();
+      }
+      if (params.get('pbt')) document.getElementById('pet-back-tel').value = params.get('pbt');
+      if (params.get('pbs')) document.getElementById('pet-back-sub').value = params.get('pbs');
+      if (params.get('pbst')) document.getElementById('pet-back-style').value = params.get('pbst');
+      if (params.get('qu')) document.getElementById('qr-url').value = params.get('qu');
+      if (params.get('qe')) {
+        document.getElementById('qr-enable').value = params.get('qe');
+        toggleQrEnableUI();
+      }
+      if (params.get('qf')) document.getElementById('qr-frame').value = params.get('qf');
+      if (params.get('st')) setStamp(params.get('st'));
+      if (params.get('std')) document.getElementById('stand-type').value = params.get('std');
+      if (params.get('m')) switchMode(params.get('m'));
+    }
+
+    // 🌟 完全日英バイリンガル辞書 (100%画面内全要素・セレクト選択肢・ボタン・モーダル対応)
+    const I18N = {
+      ja: {
+        'btn-lang': '🌐 EN / 日本語',
+        'btn-pro-plan': '✨ Proプラン (商用OK)',
+        'ui-hint': 'ドラッグで回転 / ホイール・ピンチで拡大縮小',
+        'btn-flip': '🔄 表 ⇄ 裏を反転',
+        'btn-stand-view': '📐 カウンター視点',
+        'btn-reset-cam': '正面リセット',
+
+        'lbl-mode': '① 作成モードを選択',
+        'tab-qr': '🏢 店舗看板',
+        'tab-jp': '🏠 表札',
+        'tab-pet': '🐾 ペット',
+        'tab-tag': '🔑 ネームタグ',
+
+        'lbl-stand-title': '📐 看板の立て方・底のスタンド形状',
+        'lbl-stand-badge': '自立オート接地',
+        'opt-stand-stand': '🛋️ 斜め自立スタンド型（机の上に14度傾いてシャキッと立つ）',
+        'opt-stand-base-slot': '🏛️ 差し込み式台座（スロット台座ブロックに差し込んで立てる）',
+        'opt-stand-flat': '📄 フラット看板（壁貼り・マグネット用）',
+        'opt-stand-holes': '🔩 四隅ネジ穴付きプレート',
+        'opt-stand-hanging': '🧵 上部吊り下げ穴（ひも・チェーン用）',
+
+        'lbl-qr-title': '店舗・ビジネス看板設定',
+        'lbl-qr-trial-sample': '🎁 お試し見本（クリックで完成イメージを確認）',
+        'badge-qr-trial': '🔒 お試し版は見本のみ',
+        'lbl-qr-trial-lock-note': '※ 5回チケット・PROプランに切り替えると見本が消え、文字やQRを自由に入力できます',
+        'btn-qr-pre-reserved': '予約席',
+        'btn-qr-pre-staff': '関係者以外',
+        'btn-qr-pre-wifi': 'Wi-Fi (QR)',
+        'btn-qr-pre-insta': 'Instagram',
+        'lbl-qr-enable-title': 'QRコードの配置',
+        'lbl-qr-enable-desc': '「なし」にすると文字がドーンと中央に拡大されます',
+        'opt-qr-yes': '✅ QRコードあり',
+        'opt-qr-no': '🚫 QRコードなし（文字のみ）',
+        'lbl-qr-frame-title': '看板の外枠（立体縁取り）',
+        'lbl-qr-frame-desc': '外周を囲む立体フレームラインの有無',
+        'opt-qrf-yes': 'あり（立体フレーム付）',
+        'opt-qrf-no': 'なし（フレームなし・すっきり）',
+        'lbl-qr-url': 'QRコードにするURL / 文字列',
+        'lbl-qr-top': '上部テキスト（メイン文字）',
+        'lbl-qr-bot': '下部テキスト（サブ文字）',
+
+        'lbl-jp-title': '🏠 表札・ドアプレート設定',
+        'lbl-jp-trial-sample': '🎁 お試し見本（クリックで完成イメージを確認）',
+        'badge-jp-trial': '🔒 お試し版は見本のみ',
+        'lbl-jp-trial-lock-note': '※ 5回チケット・PROプランに切り替えると見本が消え、文字を自由に入力できます',
+        'btn-jp-pre-open': '佐藤 / SATO',
+        'btn-jp-pre-en': '田中（縦書き）',
+        'btn-jp-pre-wood': 'YAMADA（洋風）',
+        'btn-jp-pre-onsen': '鈴木 102号室',
+        'lbl-jp-rev-title': '🔄 表裏リバーシブル（両面プレートにする）',
+        'lbl-jp-rev-desc': '裏面にも文字を入れる場合のみON',
+        'lbl-jp-front': 'メイン文字（苗字・お名前）',
+        'lbl-jp-sub': 'サブ文字（英字・番地・部屋番号）',
+        'lbl-jp-back': '【裏面】の文字',
+        'lbl-jp-dir': 'レイアウト（文字の向き）',
+        'opt-jpd-horiz': '横書き（標準・マンション・洋風表札）',
+        'opt-jpd-vert': '縦書き（戸建て・和風表札）',
+        'lbl-jp-frame': '外枠・縁デザイン',
+        'opt-jpf-wood': 'シンプル外枠（モダン表札定番）',
+        'opt-jpf-double': '二重枠（格調高い和モダン枠）',
+        'opt-jpf-retro': '太枠（くっきり重厚フレーム）',
+        'opt-jpf-none': '🚫 枠・縁なし（フラット・文字のみ）',
+
+        'lbl-pet-title': '🐾 愛犬・愛猫 ペット用プレート（迷子札・ネームタグ）',
+        'lbl-pet-trial-sample': '🎁 お試し見本（クリックで完成イメージを確認）',
+        'badge-pet-trial': '🔒 お試し版は見本のみ',
+        'lbl-pet-trial-lock-note': '※ 5回チケット・PROプランに切り替えると見本が消え、お名前・電話番号を自由に入力できます',
+        'btn-pet-pre-1': 'MOKO 🐾',
+        'btn-pet-pre-2': 'ポチ 🐾',
+        'btn-pet-pre-3': 'TAMA 🔔',
+        'btn-pet-pre-4': 'LEO 👑',
+        'lbl-pet-name': 'ペットのお名前',
+        'lbl-pet-tel': '飼い主の電話番号 (TEL)',
+        'lbl-pet-shape-title': '① 形状テンプレート選択（シンプル定番6種）',
+        'txt-shape-round': '丸型・サークル',
+        'txt-shape-diamond': 'ひし形・ダイヤ',
+        'txt-shape-square': '角丸スクエア',
+        'txt-shape-rect': '角丸長方形',
+        'txt-shape-capsule': '小判・カプセル',
+        'txt-shape-hex': '六角形タグ',
+        'opt-pts-round': '〇 丸型・サークル（定番メダルプレート）',
+        'opt-pts-diamond': '◇ ひし形・ダイヤ（スマートな角丸ダイヤ）',
+        'opt-pts-square': '□ 角丸スクエア（すっきり正方形）',
+        'opt-pts-rect': '▭ 角丸長方形（定番ネームプレート）',
+        'opt-pts-capsule': '⬭ 小判・カプセル型（角のない優しい楕円）',
+        'opt-pts-hex': '⬡ 六角形タグ（モダンなヘキサゴン）',
+        'lbl-pet-deco': '② ワンポイントデコ（立体アイコン）',
+        'btn-pdec-none': 'なし',
+        'lbl-pet-frame-title': 'フチ取り立体リム（Accent Rim）',
+        'lbl-pet-frame-desc': '形状輪郭に沿った2色目立体フレーム',
+        'opt-ptf-yes': 'あり（立体フチ付・おすすめ）',
+        'opt-ptf-no': 'なし（フチなし・フラット）',
+        'lbl-pet-rev-title': '🔄 迷子札の裏面設定（TEL・連絡先）',
+        'lbl-pet-rev-desc': '裏面に電話番号やマイクロチップ情報を刻印',
+        'lbl-pet-back-tel': '裏面TEL / 連絡先',
+        'lbl-pet-back-sub': '裏面サブ文字（住所・Chip等）',
+        'lbl-pet-back-style': '裏面の刻印スタイル',
+        'opt-pbs-emboss': '✨ 浮き彫り（凸・2色AMS印刷用）',
+        'opt-pbs-engrave': '⚡ 彫り込み（凹・エングレーブ）',
+        'lbl-pet-pos': '首輪リングの位置',
+        'opt-pth-top': '☝️ 上部中央（定番・首輪用）',
+        'opt-pth-top-right': '↗️ 右上（斜め吊り）',
+        'opt-pth-left': '👈 左端中央（横向き）',
+        'opt-pth-inside-top': '⭕ 上部内側穴（突起なし）',
+        'opt-pth-none': '🚫 リング穴なし（プレート用）',
+        'lbl-pet-dia': '穴の直径 (mm)',
+
+        'lbl-tag-title': '名入れキーホルダー・タグ設定',
+        'lbl-tag-trial-sample': '🎁 お試し見本（クリックで完成イメージを確認）',
+        'badge-tag-trial': '🔒 お試し版は見本のみ',
+        'lbl-tag-trial-lock-note': '※ 5回チケット・PROプランに切り替えると見本が消え、お好きな文字を自由に入力できます',
+        'btn-tag-pre-1': 'TARO',
+        'btn-tag-pre-2': 'なまえ',
+        'btn-tag-pre-3': 'ROOM 101',
+        'btn-tag-pre-4': 'STAFF',
+        'lbl-tag-text': '入れる文字（お名前など）',
+        'lbl-tag-sub': 'フリー入力（誕生日・番号など）',
+        'lbl-tag-shape-title': '① タグの形状を選択（6種類）',
+        'txt-tshape-rect': '角丸長方形',
+        'txt-tshape-capsule': '小判・カプセル',
+        'txt-tshape-hex': '六角・ホテルキー',
+        'txt-tshape-diamond': 'ひし形・ダイヤ',
+        'txt-tshape-round': '丸型・サークル',
+        'txt-tshape-square': '角丸スクエア',
+        'lbl-tag-frame-title': '外周の立体フチ（縁取りライン）',
+        'lbl-tag-frame-desc': 'ベースの輪郭にぴったり沿う2色目フレーム',
+        'opt-tgf-yes': 'あり（立体フチ付・おすすめ）',
+        'opt-tgf-no': 'なし（フチなし・フラット）',
+        'lbl-tag-pos': 'チェーン穴の位置',
+        'opt-tgh-left': '👈 左端リング突起（横長用）',
+        'opt-tgh-top': '☝️ 上部リング突起（縦・丸型用）',
+        'opt-tgh-inside-left': '⭕ 左端内側穴（突起なし）',
+        'opt-tgh-none': '🚫 穴なし（ネームプレート）',
+        'lbl-tag-dia': '穴の直径 (mm)',
+
+        'lbl-stamp-title': '✨ 立体アイコン（スタンプ）',
+        'stamp-none': 'なし',
+
+        'lbl-step2': '② 書体・サイズ・色替え高さ設定',
+        'lbl-badge-fast': '⚡ 超高速描画',
+        'lbl-font': 'フォント（書体）選択（全13種・OFL商用フリー）',
+        'lbl-font-scale': '🔠 文字サイズ調整',
+        'btn-font-scale-reset': '標準に戻す',
+        'lbl-text-pos-title': '✥ 文字の位置移動（スライダー / Shift+ドラッグ）',
+        'btn-text-pos-reset': '中央に戻す',
+        'lbl-text-pos-x': '左右移動 (X)',
+        'lbl-text-pos-y': '上下移動 (Y)',
+        'btn-text-drag-mode': '✥ マウスで文字移動: OFF',
+        'optgrp-font-jp': '── 日本語・看板・タグ向け ──',
+        'optgrp-font-trad': '── 表札・和風・明朝・筆文字 ──',
+        'optgrp-font-en': '── 英数字・デザイン特化 ──',
+        'opt-f-noto': '極太ゴシック（視認性抜群・店舗・標識向け）',
+        'opt-f-dela': '昭和レトロ極太体（看板・キーホルダー定番）',
+        'opt-f-mplus': 'ぽってり丸ゴシック（ペット・かわいい系）',
+        'opt-f-pop': '手書き風ポップ体（カフェ・かわいい迷子札）',
+        'opt-f-reggae': '武骨ブロック体（ストリート・ゲーム風・ネームタグ）',
+        'opt-f-serif': '極太明朝体（高級感・表札・料亭）',
+        'opt-f-kaisei': '特太江戸文字風（お祭り・看板・提灯風）',
+        'opt-f-syuku': '毛筆草書体（千社札・木札・神社仏閣）',
+        'opt-f-boku': '豪快毛筆行書（力強い和風看板）',
+        'opt-f-zen': 'アンティーク和風明朝（古民家・レトロ）',
+        'opt-f-anton': '極太インパクト（RESERVED・STAFF ONLY）',
+        'opt-f-blackops': 'ミリタリー・ステンシル（工具タグ・ガレージ）',
+        'opt-f-russo': 'スポーティ極太（チームネーム・アウトドア）',
+        'lbl-size-w': '横幅 (X)',
+        'lbl-size-h': '縦幅 (Y)',
+        'lbl-thick-base': '土台厚み (1色目)',
+        'lbl-thick-top': '文字・枠の高さ (2色目)',
+        'lbl-col-base': '土台カラー',
+        'lbl-col-top': '文字・凸カラー',
+
+        'btn-export-3mf': '🎨 2色カラー付 3MFで出力（Bambu Studio等推奨）',
+        'btn-export-merged': '📥 一体型STLをダウンロード（単色プリンター用）',
+        'btn-export-base': '🧩 土台のみSTL (マルチ色用)',
+        'btn-export-top': '🧩 文字・凸のみSTL (マルチ色用)',
+        'btn-share': '🔗 現在のデザインをURLで保存（スマホ➔PC引き継ぎ用）',
+
+        'lbl-side-license-title': '【商用利用ライセンス・免責事項について】',
+        'lbl-side-license-ticket': '<strong>・チケット購入（個人プラン）：</strong>ご自身のペット用やギフトなど、個人利用の範囲でご利用いただけます。',
+        'lbl-side-license-pro': '<strong>・PROプラン（商用ライセンス付）：</strong>ご契約期間中、本ツールで生成・3Dプリントした<strong>「物理的な造形物（実物の迷子札・看板・キーホルダー等）」を、メルカリ・BASE・Etsy・実店舗などで自由に販売</strong>していただけます。（※出力したSTL/3MFデジタルデータそのものの転売・再配布は禁止です）',
+        'lbl-side-license-font': '✅ 搭載されている全13種のフォントはすべて「SIL Open Font License (OFL)＝商用利用・プリント販売完全無料」のため、著作権の心配なく安心して販売いただけます。',
+        'lbl-side-license-disclaimer': '※免責事項：本ツールで生成されたデータに基づく3Dプリント造形物の強度、耐久性、誤飲事故等の損害について当サービスは責任を負いません。適切なフィラメント（PETG/PLA等）をお選びください。',
+
+        'lbl-seo-summary': '📖 3Dプリンターでの綺麗な2色印刷のコツ（SEO案内）',
+        'lbl-seo-p1': '<strong>・単色3Dプリンターの場合：</strong>「一体型STL」をダウンロードし、スライサー（Bambu Studio / Cura / PrusaSlicer等）で土台厚み（例：2.0mm）の次のレイヤーに「一時停止（Pause）またはフィラメント変更」を設定すると、手動で簡単に2色看板が作れます。',
+        'lbl-seo-p2': '<strong>・AMS等のマルチカラー機の場合：</strong>「土台のみSTL」と「文字・凸のみSTL」の2つをダウンロードし、スライサーに2つ同時にドラッグ＆ドロップして「1つのオブジェクトとして結合」を選ぶと、パーツごとに1クリックで色分け印刷が可能です。',
+
+        'lbl-modal-badge': '3MF / STL データ出力＆プラン選択',
+        'lbl-modal-title': '料金プランの選択・データ書き出し',
+        'lbl-modal-desc': '生成された3MF/STLデータはすべてのスライサーソフト（Bambu Studio、PrusaSlicer、OrcaSlicer、Cura等）にそのまま読み込めます。',
+        'lbl-modal-p0-title': '🎁 無料体験（Free）：0円',
+        'lbl-modal-p0-desc': '自由な文字・名前入力、全13書体、3D回転プレビュー、色替え体験まで完全無料（※3MF・STLデータの保存・書き出しのみチケットまたはPROが必要です）',
+        'lbl-modal-p0-price': '0円（完全無料）',
+        'lbl-modal-p1-badge': '個人向け・1デザインあたり100円（ワンコイン）',
+        'lbl-modal-p1-title': '🎫 カスタム作成 5回チケット（5回デザインチケット）',
+        'lbl-modal-p1-desc': '作成したオリジナル3Dデータ（3MF/STL）を5回分ダウンロード書き出し（お好きな文字・QRで5デザイン作成可能）',
+        'lbl-modal-p2-pop': '商用・プロ向け｜一番人気・実物の販売OK',
+        'lbl-modal-p2-title': '👑 PRO作り放題プラン（商用ライセンス付）',
+        'lbl-modal-p2-desc': '3MF/STLデータのダウンロード出力が無制限 ＋ 実物の3Dプリント造形物をメルカリ・BASE・Etsy等で自由に販売OK',
+        'lbl-modal-p2-unit': '/月',
+        'lbl-modal-lic-title': '【商用利用ライセンス・返金ポリシーについて】',
+        'lbl-modal-lic-ticket': '<strong>・チケット購入（個人プラン）：</strong>ご自身のペット用やギフトなど、個人利用の範囲でご利用いただけます。',
+        'lbl-modal-lic-pro': '<strong>・PROプラン（商用ライセンス付）：</strong>ご契約期間中、本ツールで生成・3Dプリントした<strong>「物理的な造形物（実物の迷子札・看板・キーホルダー等）」を、メルカリ・BASE・Etsy・実店舗などで自由に販売</strong>していただけます。（※出力したSTL/3MFデジタルデータそのものの転売・再配布は禁止です）',
+        'lbl-modal-lic-refund': '<strong>※返金ポリシー：</strong>デジタルデータの性質上、決済完了後のキャンセル・返金は対応いたしかねます。必ず無料3Dプレビューで文字や形状をご確認の上ご購入ください。',
+        'lbl-modal-lic-disclaimer': '<strong>※造形物に関する免責条項：</strong>本ツールで生成されたデータに基づく3Dプリント造形物の強度、耐久性、誤飲事故、首輪の破損等の損害について、当サービスは一切の責任を負いません。材質（PETG/PLA等）やインフィル設定の選定はユーザー自身の責任において行ってください。',
+        'lbl-modal-lic-cache-note': '※ブラウザの履歴やキャッシュを削除すると購入回数がリセットされる場合があります。万が一消えた場合は注文番号を添えてお問い合わせください（再発行いたします）。',
+        'lbl-passcode-label': '🔑 パスコード入力:',
+        'btn-passcode-apply': '適用',
+        'lbl-modal-note': '💡 現在は体感テストモードのため、上の3つのプランカードをクリックすると即座に「お試し(0円)」「5回チケット」「PRO作り放題」を切り替えて体感できます'
+      },
+      en: {
+        'btn-lang': '🌐 日本語 / EN',
+        'btn-pro-plan': '✨ Pro License (Commercial)',
+        'ui-hint': 'Drag: Rotate / Scroll: Zoom',
+        'btn-flip': '🔄 Flip Front / Back',
+        'btn-stand-view': '📐 Counter View',
+        'btn-reset-cam': 'Front View',
+
+        'lbl-mode': '① Select Generator Mode',
+        'tab-qr': '🏢 Shop Sign',
+        'tab-jp': '🏠 Nameplate',
+        'tab-pet': '🐾 Pet Tag',
+        'tab-tag': '🔑 Name Tag',
+
+        'lbl-stand-title': '📐 Stand Type & Base Mount Shape',
+        'lbl-stand-badge': 'Auto Snap to Bed',
+        'opt-stand-stand': '🛋️ Angled Desktop Stand (14° tilt for counter display)',
+        'opt-stand-base-slot': '🏛️ Slot-in Base Block (Insert plate into stand)',
+        'opt-stand-flat': '📄 Flat Sign (Wall Mount & Magnet)',
+        'opt-stand-holes': '🔩 4-Corner Screw Hole Plate',
+        'opt-stand-hanging': '🧵 Top Hanging Holes (Cord & Chain)',
+
+        'lbl-qr-title': 'Shop & Business Sign Settings',
+        'lbl-qr-trial-sample': '🎁 Trial Samples (Click to preview example)',
+        'badge-qr-trial': '🔒 Trial: Samples Only',
+        'lbl-qr-trial-lock-note': '※ Unlock 5-Design Ticket or PRO Plan to hide samples and enter custom text & QR freely',
+        'btn-qr-pre-reserved': 'Reserved',
+        'btn-qr-pre-staff': 'Staff Only',
+        'btn-qr-pre-wifi': 'Wi-Fi (QR)',
+        'btn-qr-pre-insta': 'Instagram',
+        'lbl-qr-enable-title': 'QR Code Placement',
+        'lbl-qr-enable-desc': 'When disabled, text is enlarged centered',
+        'opt-qr-yes': '✅ With QR Code',
+        'opt-qr-no': '🚫 Text Only (No QR)',
+        'lbl-qr-frame-title': 'Sign Outer 3D Frame',
+        'lbl-qr-frame-desc': 'Raised contour line along border',
+        'opt-qrf-yes': 'Yes (With 3D Frame)',
+        'opt-qrf-no': 'No (Clean Frameless)',
+        'lbl-qr-url': 'QR Code Target URL / Text',
+        'lbl-qr-top': 'Top Text (Main Text)',
+        'lbl-qr-bot': 'Bottom Text (Sub Text)',
+
+        'lbl-jp-title': '🏠 House Nameplate & Door Plate Settings',
+        'lbl-jp-trial-sample': '🎁 Trial Samples (Click to preview example)',
+        'badge-jp-trial': '🔒 Trial: Samples Only',
+        'lbl-jp-trial-lock-note': '※ Unlock 5-Design Ticket or PRO Plan to hide samples and enter custom text freely',
+        'btn-jp-pre-open': 'Sato (2-Line)',
+        'btn-jp-pre-en': 'Tanaka (Vertical)',
+        'btn-jp-pre-wood': 'YAMADA (Modern)',
+        'btn-jp-pre-onsen': 'Suzuki Rm 102',
+        'lbl-jp-rev-title': '🔄 Reversible Double-Sided Plate',
+        'lbl-jp-rev-desc': 'Enable only when adding text on back side',
+        'lbl-jp-front': 'Main Name (Surname / Title)',
+        'lbl-jp-sub': 'Sub Text (English / Room No. / Optional)',
+        'lbl-jp-back': '【Back Side】Text',
+        'lbl-jp-dir': 'Layout / Orientation',
+        'opt-jpd-horiz': 'Horizontal (Standard & Modern Nameplate)',
+        'opt-jpd-vert': 'Vertical (Traditional Japanese Nameplate)',
+        'lbl-jp-frame': 'Outer Frame & Border Style',
+        'opt-jpf-wood': 'Simple Modern Border (Recommended)',
+        'opt-jpf-double': 'Double Traditional Frame',
+        'opt-jpf-retro': 'Bold Heavy Frame',
+        'opt-jpf-none': '🚫 Frameless (Text Only)',
+
+        'lbl-pet-title': '🐾 Pet Tag & Lost Pet ID (Dog & Cat)',
+        'lbl-pet-trial-sample': '🎁 Trial Samples (Click to preview example)',
+        'badge-pet-trial': '🔒 Trial: Samples Only',
+        'lbl-pet-trial-lock-note': '※ Unlock 5-Design Ticket or PRO Plan to hide samples and type your pet name & TEL freely',
+        'btn-pet-pre-1': 'MOKO 🐾',
+        'btn-pet-pre-2': 'POCHI 🐾',
+        'btn-pet-pre-3': 'TAMA 🔔',
+        'btn-pet-pre-4': 'LEO 👑',
+        'lbl-pet-name': 'Pet Name',
+        'lbl-pet-tel': 'Owner Phone Number (TEL)',
+        'lbl-pet-shape-title': '① Geometric Tag Shape (6 Clean Presets)',
+        'txt-shape-round': 'Circle Tag',
+        'txt-shape-diamond': 'Diamond Tag',
+        'txt-shape-square': 'Rounded Square',
+        'txt-shape-rect': 'Rectangle Tag',
+        'txt-shape-capsule': 'Oval Capsule',
+        'txt-shape-hex': 'Hexagon Tag',
+        'opt-pts-round': '〇 Circle (Classic round medal tag)',
+        'opt-pts-diamond': '◇ Diamond (Sleek rounded lozenge)',
+        'opt-pts-square': '□ Rounded Square (Clean square plate)',
+        'opt-pts-rect': '▭ Rounded Rectangle (Classic name tag)',
+        'opt-pts-capsule': '⬭ Oval / Capsule (Smooth pill shape)',
+        'opt-pts-hex': '⬡ Hexagon (Modern 6-sided tag)',
+        'lbl-pet-deco': '② Accent Deco Icon (AMS 3D Stamp)',
+        'btn-pdec-none': 'None',
+        'lbl-pet-frame-title': 'Accent Rim (Outer 3D Frame)',
+        'lbl-pet-frame-desc': '2-tone raised border tracing outer shape',
+        'opt-ptf-yes': 'Yes (With 3D Accent Rim • Recommended)',
+        'opt-ptf-no': 'No (Borderless • Flat)',
+        'lbl-pet-rev-title': '🔄 Reverse Side ID (Owner TEL & Microchip)',
+        'lbl-pet-rev-desc': 'Engrave/emboss phone number & microchip info on back',
+        'lbl-pet-back-tel': 'Back Side Phone / TEL',
+        'lbl-pet-back-sub': 'Back Side Sub Info (Address, Microchip)',
+        'lbl-pet-back-style': 'Back Engrave / Emboss Style',
+        'opt-pbs-emboss': '✨ Emboss (Raised • 2-Color AMS)',
+        'opt-pbs-engrave': '⚡ Engrave (Recessed Grooves)',
+        'lbl-pet-pos': 'Collar Ring Attachment',
+        'opt-pth-top': '☝️ Top Center (Collar Classic)',
+        'opt-pth-top-right': '↗️ Top-Right (Diagonal Hang)',
+        'opt-pth-left': '👈 Left Side (Horizontal Hang)',
+        'opt-pth-inside-top': '⭕ Top Inside Hole (No Outer Tab)',
+        'opt-pth-none': '🚫 No Ring Hole (Plate Only)',
+        'lbl-pet-dia': 'Hole Diameter (mm)',
+
+        'lbl-tag-title': 'Custom Name Keychain & Tag Settings',
+        'lbl-tag-trial-sample': '🎁 Trial Samples (Click to preview example)',
+        'badge-tag-trial': '🔒 Trial: Samples Only',
+        'lbl-tag-trial-lock-note': '※ Unlock 5-Design Ticket or PRO Plan to hide samples and type custom text freely',
+        'btn-tag-pre-1': 'TARO',
+        'btn-tag-pre-2': 'NAME',
+        'btn-tag-pre-3': 'ROOM 101',
+        'btn-tag-pre-4': 'STAFF',
+        'lbl-tag-text': 'Main Text (Name, etc.)',
+        'lbl-tag-sub': 'Free Sub Text (Birthday, No., etc.)',
+        'lbl-tag-shape-title': '① Select Tag Shape (6 Presets)',
+        'txt-tshape-rect': 'Rounded Rect',
+        'txt-tshape-capsule': 'Oval Capsule',
+        'txt-tshape-hex': 'Hex Hotel Key',
+        'txt-tshape-diamond': 'Diamond Tag',
+        'txt-tshape-round': 'Circle Tag',
+        'txt-tshape-square': 'Rounded Square',
+        'lbl-tag-frame-title': 'Outer 3D Frame (Accent Rim)',
+        'lbl-tag-frame-desc': '2-tone raised border matching base contour',
+        'opt-tgf-yes': 'Yes (With 3D Rim • Recommended)',
+        'opt-tgf-no': 'No (Borderless • Flat)',
+        'lbl-tag-pos': 'Chain Hole Position',
+        'opt-tgh-left': '👈 Left Ring Tab (Horizontal Tag)',
+        'opt-tgh-top': '☝️ Top Ring Tab (Vertical / Round Tag)',
+        'opt-tgh-inside-left': '⭕ Left Inside Hole (Sleek Flush)',
+        'opt-tgh-none': '🚫 No Hole (Nameplate)',
+        'lbl-tag-dia': 'Hole Diameter (mm)',
+
+        'lbl-stamp-title': '✨ 3D Icon Stamps',
+        'stamp-none': 'None',
+
+        'lbl-step2': '② Font, Dimensions & Height Settings',
+        'lbl-badge-fast': '⚡ Ultra-Fast Meshing',
+        'lbl-font': 'Select Font Family (13 Commercial-Free OFL Fonts)',
+        'lbl-font-scale': '🔠 Text Size Scale',
+        'btn-font-scale-reset': 'Reset 100%',
+        'lbl-text-pos-title': '✥ Move Text Position (Sliders / Shift+Drag)',
+        'btn-text-pos-reset': 'Center Reset',
+        'lbl-text-pos-x': 'Move X (Left/Right)',
+        'lbl-text-pos-y': 'Move Y (Up/Down)',
+        'btn-text-drag-mode': '✥ Drag Text Mode: OFF',
+        'optgrp-font-jp': '── Japanese, Signs & Tags ──',
+        'optgrp-font-trad': '── Nameplate, Serif & Brush ──',
+        'optgrp-font-en': '── English & Special Design ──',
+        'opt-f-noto': 'Heavy Sans Bold (High Visibility • Signs)',
+        'opt-f-dela': 'Showa Retro Heavy (Vintage Signs & Tags)',
+        'opt-f-mplus': 'Chubby Rounded Sans (Pets & Cute)',
+        'opt-f-pop': 'Handwritten Pop (Cafes & Pet Tags)',
+        'opt-f-reggae': 'Bold Street Block (Gaming & Street)',
+        'opt-f-serif': 'Heavy Serif Mincho (Luxury • Houseplate)',
+        'opt-f-kaisei': 'Traditional Edo Style (Festivals & Signs)',
+        'opt-f-syuku': 'Brush Calligraphy Cursive (Senshafuda & Shrines)',
+        'opt-f-boku': 'Dynamic Bold Brush (Powerful Japanese Signs)',
+        'opt-f-zen': 'Antique Japanese Serif (Retro Heritage)',
+        'opt-f-anton': 'Anton Ultra Bold (RESERVED • STAFF ONLY)',
+        'opt-f-blackops': 'Military Stencil (Tool Tags & Garage)',
+        'opt-f-russo': 'Sporty Bold (Team Names & Outdoors)',
+        'lbl-size-w': 'Width (X)',
+        'lbl-size-h': 'Height (Y)',
+        'lbl-thick-base': 'Base Thickness (1st Color)',
+        'lbl-thick-top': 'Text / Relief Height (2nd Color)',
+        'lbl-col-base': 'Base Color',
+        'lbl-col-top': 'Text Color',
+
+        'btn-export-3mf': '🎨 Download 2-Color 3MF (For Bambu Studio / AMS)',
+        'btn-export-merged': '📥 Download Merged STL (Single-Color Printer)',
+        'btn-export-base': '🧩 Base STL Only (Multi-color AMS)',
+        'btn-export-top': '🧩 Text/Relief STL Only (Multi-color AMS)',
+        'btn-share': '🔗 Save Current Design to URL',
+
+        'lbl-font-free-badge': '✨ All Fonts Free Preview',
+        'lbl-side-license-title': '【Commercial License & Disclaimer】',
+        'lbl-side-license-ticket': '<strong>• 5-Design Ticket (Personal Plan):</strong> For personal use only, such as for your own pets or personal gifts.',
+        'lbl-side-license-pro': '<strong>• PRO Plan (Commercial License Included):</strong> During your active subscription, you may freely <strong>sell physical 3D-printed items (real pet tags, signs, keychains, etc.) generated with this tool on Etsy, Shopify, Mercari, BASE, or retail stores</strong>. (*Reselling or redistributing the exported STL/3MF digital data files themselves is strictly prohibited.)',
+        'lbl-side-license-font': '✅ All 13 built-in fonts are licensed under SIL Open Font License (OFL) — 100% copyright-free for printing and selling physical products.',
+        'lbl-side-license-disclaimer': '※ Disclaimer: We are not responsible for any damage, durability, or choking hazards of physical 3D prints made with this tool. Please choose suitable filament (PETG/PLA etc.).',
+
+        'lbl-seo-summary': '📖 2-Color 3D Printing Guide & Tips',
+        'lbl-seo-p1': '<strong>• Single-extruder 3D printers:</strong> Download "Merged STL". In slicers (Bambu Studio, PrusaSlicer, Cura), set a "Pause or Filament Change" at the base height layer (e.g., 2.0mm) to switch colors easily.',
+        'lbl-seo-p2': '<strong>• Multi-color printers (AMS / MMU):</strong> Download both "Base STL" and "Text STL". Drag and drop both files into your slicer together and choose "Load as single object with multiple parts" to colorize with 1 click.',
+
+        'lbl-modal-badge': '3MF / STL Export & Plan Selection',
+        'lbl-modal-title': 'Select Plan & Export 3D Data',
+        'lbl-modal-desc': 'Generated 3MF/STL files are 100% compatible with all slicers (Bambu Studio, PrusaSlicer, OrcaSlicer, Cura, Anycubic, Creality).',
+        'lbl-modal-p0-title': '🎁 Free Trial: $0',
+        'lbl-modal-p0-desc': 'Full custom text input, all 13 fonts, 3D rotating preview, and color changes are 100% free (*Only 3MF/STL file download requires a ticket or PRO)',
+        'lbl-modal-p0-price': '$0 (Free)',
+        'lbl-modal-p1-badge': 'Personal • $0.70 / ¥100 per design (One Coin)',
+        'lbl-modal-p1-title': '🎫 5-Design Custom Ticket (¥500 / $3.49)',
+        'lbl-modal-p1-desc': 'Download and export your created 3D models (3MF/STL) up to 5 times (Custom text & QR supported)',
+        'lbl-modal-p2-pop': 'Commercial & Pro | Most Popular • Physical Sales OK',
+        'lbl-modal-p2-title': '👑 Unlimited PRO Plan ($17.99/mo / ¥2,700)',
+        'lbl-modal-p2-desc': 'Unlimited 3MF/STL file downloads + Sell physical 3D-printed products freely on Etsy, Shopify, Mercari, or local stores',
+        'lbl-modal-p2-unit': '/mo',
+        'lbl-modal-lic-title': '【Commercial License & Refund Policy】',
+        'lbl-modal-lic-ticket': '<strong>• 5-Design Ticket (Personal Plan):</strong> For personal use only, such as for your own pets or personal gifts.',
+        'lbl-modal-lic-pro': '<strong>• PRO Plan (Commercial License Included):</strong> During your active subscription, you may freely <strong>sell physical 3D-printed items (real pet tags, signs, keychains, etc.) generated with this tool on Etsy, Shopify, Mercari, BASE, or retail stores</strong>. (*Reselling or redistributing the exported STL/3MF digital data files themselves is strictly prohibited.)',
+        'lbl-modal-lic-refund': '<strong>※ Refund Policy:</strong> Due to the nature of digital 3D files, refunds or cancellations cannot be accepted after purchase. Please verify your design in the free 3D preview before checkout.',
+        'lbl-modal-lic-disclaimer': '<strong>※ Product Disclaimer:</strong> We are not liable for physical product strength, wear-and-tear, or pet choking hazards. Users are responsible for choosing appropriate filament and slicer settings.',
+        'lbl-modal-lic-cache-note': '※ Clearing your browser cache may reset remaining tickets. Contact us with your order number if you need your balance restored.',
+        'lbl-passcode-label': '🔑 Passcode:',
+        'btn-passcode-apply': 'Apply',
+        'lbl-modal-note': '💡 Test Mode Active: Click any of the 3 plan cards above to instantly switch and experience "Free ($0)", "5-Design Ticket", or "Unlimited PRO"'
+      }
+    };
+
+    function toggleLang() {
+      isEnglish = !isEnglish;
+      const lang = isEnglish ? 'en' : 'ja';
+      const dict = I18N[lang];
+      for (const id in dict) {
+        const el = document.getElementById(id);
+        if (el) {
+          if (el.tagName === 'OPTGROUP') {
+            el.label = dict[id];
+          } else if (dict[id].includes('<strong>')) {
+            el.innerHTML = dict[id];
+          } else {
+            el.innerText = dict[id];
+          }
+        }
+      }
+      const lblCur = document.getElementById('lbl-stamp-current-name');
+      if (lblCur) {
+        lblCur.innerText = (isEnglish ? 'Selected: ' : '選択中: ') + getStampName(currentStamp, isEnglish);
+      }
+      const passInput = document.getElementById('pro-passcode-input');
+      if (passInput) {
+        passInput.placeholder = isEnglish ? 'Enter TICKET5 or PRO2026' : 'TICKET5 または PRO2026';
+      }
+
+      // 全カテゴリー（店舗看板・表札・ペット・ネームタグ）のテンプレート文字も日英連動で切り替えて3Dモデルへ即座に反映
+      const qrBot = document.getElementById('qr-bottom-text');
+      if (qrBot) {
+        if (isEnglish) {
+          if (qrBot.value === 'ご予約席') qrBot.value = 'TABLE RESERVED';
+          else if (qrBot.value === '関係者以外立入禁止') qrBot.value = 'AUTHORIZED PERSONNEL';
+        } else {
+          if (qrBot.value === 'TABLE RESERVED') qrBot.value = 'ご予約席';
+          else if (qrBot.value === 'AUTHORIZED PERSONNEL') qrBot.value = '関係者以外立入禁止';
+        }
+      }
+
+      const jpTxt = document.getElementById('jp-text');
+      const jpSub = document.getElementById('jp-text-sub');
+      const jpBack = document.getElementById('jp-text-back');
+      if (jpTxt) {
+        if (isEnglish) {
+          if (jpTxt.value === '佐藤') { jpTxt.value = 'SATO'; if (jpSub && jpSub.value === 'SATO') jpSub.value = 'FAMILY'; }
+          else if (jpTxt.value === '田中') { jpTxt.value = 'TANAKA'; }
+          else if (jpTxt.value === '鈴木') { jpTxt.value = 'SUZUKI'; }
+        } else {
+          if (jpTxt.value === 'SATO') { jpTxt.value = '佐藤'; if (jpSub && jpSub.value === 'FAMILY') jpSub.value = 'SATO'; }
+          else if (jpTxt.value === 'TANAKA') { jpTxt.value = '田中'; }
+          else if (jpTxt.value === 'SUZUKI') { jpTxt.value = '鈴木'; }
+        }
+      }
+      if (jpBack) {
+        if (isEnglish && jpBack.value === '不在') jpBack.value = 'VACANT';
+        else if (!isEnglish && jpBack.value === 'VACANT') jpBack.value = '不在';
+      }
+
+      const petName = document.getElementById('pet-name');
+      if (petName) {
+        if (isEnglish && petName.value === 'ポチ') petName.value = 'POCHI';
+        else if (!isEnglish && petName.value === 'POCHI') petName.value = 'ポチ';
+      }
+
+      const tagTxt = document.getElementById('tag-text');
+      if (tagTxt) {
+        if (isEnglish && tagTxt.value === 'なまえ') tagTxt.value = 'NAME';
+        else if (!isEnglish && tagTxt.value === 'NAME') tagTxt.value = 'なまえ';
+      }
+
+      toggleQrEnableUI();
+      applyProPlanUI();
+    }
+
+    function onResize() {
+      const container = document.getElementById('canvas-container');
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    init();
+  </script>
+</body>
+</html>
