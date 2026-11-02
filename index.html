@@ -593,14 +593,14 @@
 
         <!-- ③ 商用・プロ向け：PRO作り放題プラン -->
         <div id="card-plan-pro" onclick="handleSelectProPlan()" class="p-3.5 rounded-lg border-2 border-amber-500 bg-amber-500/10 hover:bg-amber-500/20 cursor-pointer transition flex justify-between items-center gap-2 relative">
-          <span class="absolute -top-2.5 right-3 bg-amber-500 text-slate-950 text-[10px] font-extrabold px-2 py-0.5 rounded shadow" id="lbl-modal-p2-pop">商用・プロ向け｜一番人気・実物の販売OK</span>
+          <span class="absolute -top-2.5 right-3 bg-amber-500 text-slate-950 text-[10px] font-extrabold px-2 py-0.5 rounded shadow" id="lbl-modal-p2-pop">商用・プロ向け｜安心の30日パス・実物の販売OK</span>
           <div class="mt-1">
-            <div class="font-bold text-sm text-amber-300" id="lbl-modal-p2-title">👑 PRO作り放題プラン（商用ライセンス付）</div>
-            <div class="text-[11px] text-slate-200 mt-0.5" id="lbl-modal-p2-desc">3MF/STLデータのダウンロード出力が無制限 ＋ 実物の3Dプリント造形物をメルカリ・BASE・Etsy等で自由に販売OK</div>
+            <div class="font-bold text-sm text-amber-300" id="lbl-modal-p2-title">👑 PRO作り放題 30日間パス（商用ライセンス付）</div>
+            <div class="text-[11px] text-slate-200 mt-0.5" id="lbl-modal-p2-desc">購入から30日間3MF/STL出力が無制限 ＋ 実物の3Dプリント造形物をメルカリ・BASE・Etsy等で自由に販売OK（※自動更新なし・安心の都度購入）</div>
           </div>
           <div class="text-right whitespace-nowrap ml-2">
-            <div class="font-extrabold text-base text-amber-300">¥2,700<span class="text-[10px] font-normal text-slate-200" id="lbl-modal-p2-unit">/月</span></div>
-            <div class="text-[10px] text-slate-300">($17.99/mo)</div>
+            <div class="font-extrabold text-base text-amber-300">¥2,700<span class="text-[10px] font-normal text-slate-200" id="lbl-modal-p2-unit">（30日間）</span></div>
+            <div class="text-[10px] text-slate-300">($17.99 / 30 Days)</div>
           </div>
         </div>
       </div>
@@ -609,7 +609,7 @@
       <div class="bg-slate-950/90 border border-slate-800 rounded-lg p-3 mb-3.5 text-[11px] leading-relaxed space-y-1.5">
         <div class="font-bold text-amber-400" id="lbl-modal-lic-title">【商用利用ライセンス・返金ポリシーについて】</div>
         <p class="text-slate-300" id="lbl-modal-lic-ticket"><strong>・チケット購入（個人プラン）：</strong>ご自身のペット用やギフトなど、個人利用の範囲でご利用いただけます。</p>
-        <p class="text-slate-300" id="lbl-modal-lic-pro"><strong>・PROプラン（商用ライセンス付）：</strong>ご契約期間中、本ツールで生成・3Dプリントした<strong>「物理的な造形物（実物の迷子札・看板・キーホルダー等）」を、メルカリ・BASE・Etsy・実店舗などで自由に販売</strong>していただけます。（※出力したSTL/3MFデジタルデータそのものの転売・再配布は禁止です）</p>
+        <p class="text-slate-300" id="lbl-modal-lic-pro"><strong>・PROプラン（30日間パス・商用ライセンス付）：</strong>有効期間（30日間）中、本ツールで生成・3Dプリントした<strong>「物理的な造形物（実物の迷子札・看板・キーホルダー等）」を、メルカリ・BASE・Etsy・実店舗などで自由に販売</strong>していただけます。（※出力したSTL/3MFデジタルデータそのものの転売・再配布は禁止です。期限終了後は自動更新されない安心の都度購入制です）</p>
         <p class="text-rose-300 pt-1 border-t border-slate-800/80" id="lbl-modal-lic-refund"><strong>※返金ポリシー：</strong>デジタルデータの性質上、決済完了後のキャンセル・返金は対応いたしかねます。必ず無料3Dプレビューで文字や形状をご確認の上ご購入ください。</p>
         <p class="text-slate-400 text-[10px]" id="lbl-modal-lic-disclaimer"><strong>※造形物に関する免責条項：</strong>本ツールで生成されたデータに基づく3Dプリント造形物の強度、耐久性、誤飲事故、首輪の破損等の損害について、当サービスは一切の責任を負いません。材質（PETG/PLA等）やインフィル設定の選定はユーザー自身の責任において行ってください。</p>
         <p class="text-slate-400 text-[10px]" id="lbl-modal-lic-cache-note">※ブラウザの履歴やキャッシュを削除すると購入回数がリセットされる場合があります。万が一消えた場合は注文番号を添えてお問い合わせください（再発行いたします）。</p>
@@ -626,14 +626,14 @@
       <button onclick="executeDownload()" id="lbl-modal-btn-download" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold py-3 px-3 rounded-lg shadow-lg transition text-xs sm:text-sm mb-2">
         📥 データをダウンロード
       </button>
-      <p class="text-[10px] text-center text-slate-400" id="lbl-modal-note">💡 現在は体感テストモードのため、上の3つのプランカードをクリックすると即座に「お試し(0円)」「5回チケット」「PRO作り放題」を切り替えて体感できます</p>
+      <p class="text-[10px] text-center text-slate-400" id="lbl-modal-note">🔒 Stripe安全決済（クレジットカード / Apple Pay / Google Pay対応）。決済完了後、自動的にチケット・PRO機能が付与されます。</p>
     </div>
   </div>
 
   <script>
     // Stripe決済リンク設定（本番公開時にStripeのURLを入れるだけで即決済連動、空欄時は1クリックで体感テスト可能）
-    const STRIPE_TICKET_URL = '';
-    const STRIPE_PRO_URL = '';
+    const STRIPE_TICKET_URL = 'https://buy.stripe.com/3cI00i5ac9KC4qW1QQ4sE02';
+    const STRIPE_PRO_URL = 'https://buy.stripe.com/bJedR85ac2iaf5A0MM4sE03';
 
     let scene, camera, renderer, controls;
     let baseGroup, topGroup, fullGroup;
@@ -646,6 +646,7 @@
     let isFlipped = false;
     let planTier = 'free'; // 'free' | 'ticket' | 'pro'
     let ticketRemaining = 0;
+    let proExpire = 0; // PRO 30日間パスの有効期限タイムスタンプ（ms）
     let isProUser = false;
     let bedMesh = null;
 
@@ -708,19 +709,31 @@
         const savedTier = localStorage.getItem('3d_studio_plan_tier') || sessionStorage.getItem('3d_studio_plan_tier') || 'free';
         const savedTickets = parseInt(localStorage.getItem('3d_studio_ticket_count') || sessionStorage.getItem('3d_studio_ticket_count') || '0', 10);
         ticketRemaining = isNaN(savedTickets) ? 0 : Math.max(0, savedTickets);
+        const savedExpire = parseInt(localStorage.getItem('3d_studio_pro_expire') || sessionStorage.getItem('3d_studio_pro_expire') || '0', 10);
+        proExpire = isNaN(savedExpire) ? 0 : savedExpire;
+
         if (savedTier === 'pro') {
-          planTier = 'pro';
+          if (proExpire > 0 && Date.now() > proExpire) {
+            planTier = 'free';
+            proExpire = 0;
+            savePlanState();
+          } else {
+            planTier = 'pro';
+          }
         } else if (savedTier === 'ticket' && ticketRemaining > 0) {
           planTier = 'ticket';
         } else {
           planTier = 'free';
         }
+
         // Stripe決済完了後のリダイレクトURLパラメータ自動解放 (?unlock=ticket5 または ?unlock=pro2026)
         const urlParams = new URLSearchParams(window.location.search);
         const unlockCode = (urlParams.get('unlock') || '').toLowerCase();
         let shouldCleanUrl = false;
         if (unlockCode === 'pro2026' || unlockCode === 'pro') {
           planTier = 'pro';
+          const baseTime = (proExpire > Date.now()) ? proExpire : Date.now();
+          proExpire = baseTime + 30 * 24 * 60 * 60 * 1000;
           savePlanState();
           shouldCleanUrl = true;
         } else if (unlockCode === 'ticket5' || unlockCode === 'ticket') {
@@ -2603,9 +2616,19 @@
       try {
         localStorage.setItem('3d_studio_plan_tier', planTier);
         localStorage.setItem('3d_studio_ticket_count', String(ticketRemaining));
+        localStorage.setItem('3d_studio_pro_expire', String(proExpire));
         sessionStorage.setItem('3d_studio_plan_tier', planTier);
         sessionStorage.setItem('3d_studio_ticket_count', String(ticketRemaining));
+        sessionStorage.setItem('3d_studio_pro_expire', String(proExpire));
       } catch (e) {}
+    }
+
+    function getProDaysRemaining() {
+      if (planTier !== 'pro') return 0;
+      if (!proExpire || proExpire <= 0) return 30;
+      const diffMs = proExpire - Date.now();
+      if (diffMs <= 0) return 0;
+      return Math.ceil(diffMs / (24 * 60 * 60 * 1000));
     }
 
     function openExportModal(type) {
@@ -2625,6 +2648,13 @@
     }
 
     function applyProPlanUI() {
+      if (planTier === 'pro') {
+        if (proExpire > 0 && Date.now() > proExpire) {
+          planTier = 'free';
+          proExpire = 0;
+          savePlanState();
+        }
+      }
       if (planTier === 'ticket' && ticketRemaining <= 0) {
         planTier = 'free';
         ticketRemaining = 0;
@@ -2672,14 +2702,15 @@
             : `🎫 残り${ticketRemaining}回（プラン確認）`;
         }
       } else if (planTier === 'pro') {
+        const daysLeft = getProDaysRemaining();
         if (toggleBtn) {
           toggleBtn.className = 'text-xs bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 font-bold px-2.5 py-1 rounded transition';
           toggleBtn.innerText = isEnglish
-            ? '👑 Unlimited PRO (Commercial OK)'
-            : '👑 PRO作り放題（無制限・商用OK）';
+            ? `👑 PRO 30-Day Pass (${daysLeft}d left)`
+            : `👑 PRO 30日パス適用中（残り ${daysLeft}日）`;
         }
         if (proBtn) {
-          proBtn.innerText = isEnglish ? '👑 PRO Active (Commercial OK)' : '👑 PROプラン適用中';
+          proBtn.innerText = isEnglish ? `👑 PRO (${daysLeft}d left)` : `👑 PROパス（残り ${daysLeft}日）`;
         }
       } else {
         if (toggleBtn) {
@@ -2738,15 +2769,16 @@
             : `🎫 チケットを1回使ってダウンロード (${extLabel})（残り ${ticketRemaining}回 ➔ ${ticketRemaining - 1}回）`;
         }
       } else {
+        const daysLeft = getProDaysRemaining();
         if (statusBadge) {
           statusBadge.className = 'text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
-          statusBadge.innerText = isEnglish ? 'Current: Unlimited PRO' : '現在：PRO作り放題（無制限）';
+          statusBadge.innerText = isEnglish ? `Current: PRO 30-Day Pass (${daysLeft}d left)` : `現在：PRO 30日パス（残り ${daysLeft}日）`;
         }
         if (dlBtn) {
           dlBtn.className = 'w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold py-3 px-3 rounded-lg shadow-lg transition text-xs sm:text-sm mb-2';
           dlBtn.innerText = isEnglish
-            ? `👑 Unlimited PRO: Instant Download (${extLabel})`
-            : `👑 PRO作り放題：今すぐダウンロード (${extLabel}・無制限)`;
+            ? `👑 PRO 30-Day Pass: Download (${extLabel} • ${daysLeft}d left)`
+            : `👑 PRO 30日パス：今すぐダウンロード (${extLabel}・残り ${daysLeft}日)`;
         }
       }
     }
@@ -2758,6 +2790,9 @@
         if (ticketRemaining <= 0) ticketRemaining = 5;
       } else if (planTier === 'ticket') {
         planTier = 'pro';
+        if (!proExpire || proExpire <= Date.now()) {
+          proExpire = Date.now() + 30 * 24 * 60 * 60 * 1000;
+        }
       } else {
         planTier = 'free';
       }
@@ -2769,6 +2804,9 @@
       planTier = tier;
       if (tier === 'ticket' && ticketRemaining <= 0) {
         ticketRemaining = 5;
+      }
+      if (tier === 'pro' && (!proExpire || proExpire <= Date.now())) {
+        proExpire = Date.now() + 30 * 24 * 60 * 60 * 1000;
       }
       savePlanState();
       applyProPlanUI();
@@ -2791,6 +2829,8 @@
         return;
       }
       planTier = 'pro';
+      const baseTime = (proExpire > Date.now()) ? proExpire : Date.now();
+      proExpire = baseTime + 30 * 24 * 60 * 60 * 1000;
       savePlanState();
       applyProPlanUI();
     }
@@ -2854,10 +2894,12 @@
       // 1. レガシー固定テストコードの判定
       if (code === 'PRO2026' || code === 'PRO') {
         planTier = 'pro';
+        const baseTime = (proExpire > Date.now()) ? proExpire : Date.now();
+        proExpire = baseTime + 30 * 24 * 60 * 60 * 1000;
         savePlanState();
         applyProPlanUI();
         input.value = '';
-        alert(isEnglish ? '👑 Unlimited PRO Plan (Commercial License) unlocked!' : '👑 PRO作り放題プラン（商用ライセンス付）が解放されました！');
+        alert(isEnglish ? `👑 Unlimited PRO 30-Day Pass unlocked! (${getProDaysRemaining()} days left)` : `👑 PRO作り放題 30日間パス（商用ライセンス付）が解放されました！（残り ${getProDaysRemaining()}日）`);
         return;
       } else if (code === 'TICKET5' || code === 'TICKET') {
         planTier = 'ticket';
@@ -2889,10 +2931,12 @@
 
           if (prefix === 'PRO') {
             planTier = 'pro';
+            const baseTime = (proExpire > Date.now()) ? proExpire : Date.now();
+            proExpire = baseTime + 30 * 24 * 60 * 60 * 1000;
             savePlanState();
             applyProPlanUI();
             input.value = '';
-            alert(isEnglish ? '👑 [Serial Validated] Unlimited PRO Plan unlocked!' : '👑 【シリアル認証完了】PRO作り放題プラン（商用ライセンス付）が解放されました！');
+            alert(isEnglish ? `👑 [Serial Validated] Unlimited PRO 30-Day Pass unlocked! (${getProDaysRemaining()} days left)` : `👑 【シリアル認証完了】PRO作り放題 30日間パス（商用ライセンス付）が解放されました！（残り ${getProDaysRemaining()}日）`);
           } else if (prefix === 'TK5') {
             planTier = 'ticket';
             ticketRemaining = Math.max(0, ticketRemaining) + 5;
@@ -3131,8 +3175,8 @@ ${componentsXml}      </components>
         }, 1200);
         alert(
           isEnglish
-            ? '🔒 3MF & STL export is disabled in the Free Trial ($0).\nPlease click "5-Design Custom Ticket ($3.99)" or "Unlimited PRO Plan ($16.99/mo)" above to unlock custom text & file export!'
-            : '🔒 お試し（Free：0円）では3MF・STLデータの出力はできません。\n上の「カスタム作成 5回チケット（¥600）」または「PRO作り放題プラン（¥2,500/月）」をクリックして解放してください！'
+            ? '🔒 3MF & STL export is disabled in the Free Trial ($0).\nPlease click "5-Design Custom Ticket ($3.49)" or "Unlimited PRO 30-Day Pass ($17.99)" above to unlock custom text & file export!'
+            : '🔒 お試し（Free：0円）では3MF・STLデータの出力はできません。\n上の「カスタム作成 5回チケット（¥500）」または「PRO作り放題 30日間パス（¥2,700）」をクリックして解放してください！'
         );
         return;
       }
@@ -3456,7 +3500,7 @@ ${componentsXml}      </components>
 
         'lbl-side-license-title': '【商用利用ライセンス・免責事項について】',
         'lbl-side-license-ticket': '<strong>・チケット購入（個人プラン）：</strong>ご自身のペット用やギフトなど、個人利用の範囲でご利用いただけます。',
-        'lbl-side-license-pro': '<strong>・PROプラン（商用ライセンス付）：</strong>ご契約期間中、本ツールで生成・3Dプリントした<strong>「物理的な造形物（実物の迷子札・看板・キーホルダー等）」を、メルカリ・BASE・Etsy・実店舗などで自由に販売</strong>していただけます。（※出力したSTL/3MFデジタルデータそのものの転売・再配布は禁止です）',
+        'lbl-side-license-pro': '<strong>・PROプラン（30日間パス・商用ライセンス付）：</strong>有効期間（30日間）中、本ツールで生成・3Dプリントした<strong>「物理的な造形物（実物の迷子札・看板・キーホルダー等）」を、メルカリ・BASE・Etsy・実店舗などで自由に販売</strong>していただけます。（※出力したSTL/3MFデジタルデータそのものの転売・再配布は禁止です。期限終了後は自動更新されない安心の都度購入制です）',
         'lbl-side-license-font': '✅ 搭載されている全13種のフォントはすべて「SIL Open Font License (OFL)＝商用利用・プリント販売完全無料」のため、著作権の心配なく安心して販売いただけます。',
         'lbl-side-license-disclaimer': '※免責事項：本ツールで生成されたデータに基づく3Dプリント造形物の強度、耐久性、誤飲事故等の損害について当サービスは責任を負いません。適切なフィラメント（PETG/PLA等）をお選びください。',
 
@@ -3473,19 +3517,19 @@ ${componentsXml}      </components>
         'lbl-modal-p1-badge': '個人向け・1デザインあたり100円（ワンコイン）',
         'lbl-modal-p1-title': '🎫 カスタム作成 5回チケット（5回デザインチケット）',
         'lbl-modal-p1-desc': '作成したオリジナル3Dデータ（3MF/STL）を5回分ダウンロード書き出し（お好きな文字・QRで5デザイン作成可能）',
-        'lbl-modal-p2-pop': '商用・プロ向け｜一番人気・実物の販売OK',
-        'lbl-modal-p2-title': '👑 PRO作り放題プラン（商用ライセンス付）',
-        'lbl-modal-p2-desc': '3MF/STLデータのダウンロード出力が無制限 ＋ 実物の3Dプリント造形物をメルカリ・BASE・Etsy等で自由に販売OK',
-        'lbl-modal-p2-unit': '/月',
+        'lbl-modal-p2-pop': '商用・プロ向け｜安心の30日パス・実物の販売OK',
+        'lbl-modal-p2-title': '👑 PRO作り放題 30日間パス（商用ライセンス付）',
+        'lbl-modal-p2-desc': '購入から30日間3MF/STL出力が無制限 ＋ 実物の3Dプリント造形物をメルカリ・BASE・Etsy等で自由に販売OK（※自動更新なし・安心の都度購入）',
+        'lbl-modal-p2-unit': '（30日間）',
         'lbl-modal-lic-title': '【商用利用ライセンス・返金ポリシーについて】',
         'lbl-modal-lic-ticket': '<strong>・チケット購入（個人プラン）：</strong>ご自身のペット用やギフトなど、個人利用の範囲でご利用いただけます。',
-        'lbl-modal-lic-pro': '<strong>・PROプラン（商用ライセンス付）：</strong>ご契約期間中、本ツールで生成・3Dプリントした<strong>「物理的な造形物（実物の迷子札・看板・キーホルダー等）」を、メルカリ・BASE・Etsy・実店舗などで自由に販売</strong>していただけます。（※出力したSTL/3MFデジタルデータそのものの転売・再配布は禁止です）',
+        'lbl-modal-lic-pro': '<strong>・PROプラン（30日間パス・商用ライセンス付）：</strong>有効期間（30日間）中、本ツールで生成・3Dプリントした<strong>「物理的な造形物（実物の迷子札・看板・キーホルダー等）」を、メルカリ・BASE・Etsy・実店舗などで自由に販売</strong>していただけます。（※出力したSTL/3MFデジタルデータそのものの転売・再配布は禁止です。期限終了後は自動更新されない安心の都度購入制です）',
         'lbl-modal-lic-refund': '<strong>※返金ポリシー：</strong>デジタルデータの性質上、決済完了後のキャンセル・返金は対応いたしかねます。必ず無料3Dプレビューで文字や形状をご確認の上ご購入ください。',
         'lbl-modal-lic-disclaimer': '<strong>※造形物に関する免責条項：</strong>本ツールで生成されたデータに基づく3Dプリント造形物の強度、耐久性、誤飲事故、首輪の破損等の損害について、当サービスは一切の責任を負いません。材質（PETG/PLA等）やインフィル設定の選定はユーザー自身の責任において行ってください。',
         'lbl-modal-lic-cache-note': '※ブラウザの履歴やキャッシュを削除すると購入回数がリセットされる場合があります。万が一消えた場合は注文番号を添えてお問い合わせください（再発行いたします）。',
         'lbl-passcode-label': '🔑 パスコード入力:',
         'btn-passcode-apply': '適用',
-        'lbl-modal-note': '💡 現在は体感テストモードのため、上の3つのプランカードをクリックすると即座に「お試し(0円)」「5回チケット」「PRO作り放題」を切り替えて体感できます'
+        'lbl-modal-note': '🔒 Stripe安全決済（クレジットカード / Apple Pay / Google Pay対応）。決済完了後、自動的にチケット・PRO機能が付与されます。'
       },
       en: {
         'btn-lang': '🌐 日本語 / EN',
@@ -3668,7 +3712,7 @@ ${componentsXml}      </components>
         'lbl-font-free-badge': '✨ All Fonts Free Preview',
         'lbl-side-license-title': '【Commercial License & Disclaimer】',
         'lbl-side-license-ticket': '<strong>• 5-Design Ticket (Personal Plan):</strong> For personal use only, such as for your own pets or personal gifts.',
-        'lbl-side-license-pro': '<strong>• PRO Plan (Commercial License Included):</strong> During your active subscription, you may freely <strong>sell physical 3D-printed items (real pet tags, signs, keychains, etc.) generated with this tool on Etsy, Shopify, Mercari, BASE, or retail stores</strong>. (*Reselling or redistributing the exported STL/3MF digital data files themselves is strictly prohibited.)',
+        'lbl-side-license-pro': '<strong>• PRO Plan (30-Day Commercial License Pass):</strong> During your active 30-day period, you may freely <strong>sell physical 3D-printed items (real pet tags, signs, keychains, etc.) generated with this tool on Etsy, Shopify, Mercari, BASE, or retail stores</strong>. (*No auto-renewal; repeat purchase only when you need it.)',
         'lbl-side-license-font': '✅ All 13 built-in fonts are licensed under SIL Open Font License (OFL) — 100% copyright-free for printing and selling physical products.',
         'lbl-side-license-disclaimer': '※ Disclaimer: We are not responsible for any damage, durability, or choking hazards of physical 3D prints made with this tool. Please choose suitable filament (PETG/PLA etc.).',
 
@@ -3685,19 +3729,19 @@ ${componentsXml}      </components>
         'lbl-modal-p1-badge': 'Personal • $0.70 / ¥100 per design (One Coin)',
         'lbl-modal-p1-title': '🎫 5-Design Custom Ticket (¥500 / $3.49)',
         'lbl-modal-p1-desc': 'Download and export your created 3D models (3MF/STL) up to 5 times (Custom text & QR supported)',
-        'lbl-modal-p2-pop': 'Commercial & Pro | Most Popular • Physical Sales OK',
-        'lbl-modal-p2-title': '👑 Unlimited PRO Plan ($17.99/mo / ¥2,700)',
-        'lbl-modal-p2-desc': 'Unlimited 3MF/STL file downloads + Sell physical 3D-printed products freely on Etsy, Shopify, Mercari, or local stores',
-        'lbl-modal-p2-unit': '/mo',
+        'lbl-modal-p2-pop': 'Commercial & Pro | 30-Day Pass • Physical Sales OK',
+        'lbl-modal-p2-title': '👑 Unlimited PRO 30-Day Pass ($17.99 / ¥2,700)',
+        'lbl-modal-p2-desc': 'Unlimited 3MF/STL file downloads for 30 days + Sell physical 3D-printed products freely on Etsy, Shopify, Mercari, or local stores (No auto-renew)',
+        'lbl-modal-p2-unit': ' / 30 Days',
         'lbl-modal-lic-title': '【Commercial License & Refund Policy】',
         'lbl-modal-lic-ticket': '<strong>• 5-Design Ticket (Personal Plan):</strong> For personal use only, such as for your own pets or personal gifts.',
-        'lbl-modal-lic-pro': '<strong>• PRO Plan (Commercial License Included):</strong> During your active subscription, you may freely <strong>sell physical 3D-printed items (real pet tags, signs, keychains, etc.) generated with this tool on Etsy, Shopify, Mercari, BASE, or retail stores</strong>. (*Reselling or redistributing the exported STL/3MF digital data files themselves is strictly prohibited.)',
+        'lbl-modal-lic-pro': '<strong>• PRO Plan (30-Day Commercial License Pass):</strong> During your active 30-day period, you may freely <strong>sell physical 3D-printed items (real pet tags, signs, keychains, etc.) generated with this tool on Etsy, Shopify, Mercari, BASE, or retail stores</strong>. (*No auto-renewal; repeat purchase only when you need it.)',
         'lbl-modal-lic-refund': '<strong>※ Refund Policy:</strong> Due to the nature of digital 3D files, refunds or cancellations cannot be accepted after purchase. Please verify your design in the free 3D preview before checkout.',
         'lbl-modal-lic-disclaimer': '<strong>※ Product Disclaimer:</strong> We are not liable for physical product strength, wear-and-tear, or pet choking hazards. Users are responsible for choosing appropriate filament and slicer settings.',
         'lbl-modal-lic-cache-note': '※ Clearing your browser cache may reset remaining tickets. Contact us with your order number if you need your balance restored.',
         'lbl-passcode-label': '🔑 Passcode:',
         'btn-passcode-apply': 'Apply',
-        'lbl-modal-note': '💡 Test Mode Active: Click any of the 3 plan cards above to instantly switch and experience "Free ($0)", "5-Design Ticket", or "Unlimited PRO"'
+        'lbl-modal-note': '🔒 Powered by Stripe (Credit Card, Apple Pay, Google Pay). Plan is instantly unlocked upon payment completion.'
       }
     };
 
