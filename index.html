@@ -3193,6 +3193,9 @@ ${componentsXml}      </components>
         w: document.getElementById('size-w').value,
         h: document.getElementById('size-h').value,
         fs: document.getElementById('font-scale') ? document.getElementById('font-scale').value : '100',
+        font: document.getElementById('font-family') ? document.getElementById('font-family').value : '',
+        cb: document.getElementById('col-base') ? document.getElementById('col-base').value : '',
+        ct: document.getElementById('col-top') ? document.getElementById('col-top').value : '',
         jt: document.getElementById('jp-text').value,
         js: document.getElementById('jp-text-sub') ? document.getElementById('jp-text-sub').value : '',
         jf: document.getElementById('jp-frame').value,
@@ -3205,7 +3208,6 @@ ${componentsXml}      </components>
         ps: document.getElementById('pet-shape').value,
         pf: document.getElementById('pet-frame') ? document.getElementById('pet-frame').value : 'yes',
         php: document.getElementById('pet-hole-pos').value,
-        pdec: currentPetDeco,
         prev: document.getElementById('pet-reverse-enable').checked ? '1' : '0',
         pbt: document.getElementById('pet-back-tel').value,
         pbs: document.getElementById('pet-back-sub').value,
@@ -3226,6 +3228,10 @@ ${componentsXml}      </components>
     function loadParamsFromURL() {
       const params = new URLSearchParams(window.location.search);
       if (params.get('fs') && document.getElementById('font-scale')) document.getElementById('font-scale').value = params.get('fs');
+      if (params.get('font') && document.getElementById('font-family')) document.getElementById('font-family').value = params.get('font');
+      if (params.get('cb') && document.getElementById('col-base')) document.getElementById('col-base').value = params.get('cb');
+      if (params.get('ct') && document.getElementById('col-top')) document.getElementById('col-top').value = params.get('ct');
+      updateMaterialColors();
       if (params.get('jt')) document.getElementById('jp-text').value = params.get('jt');
       if (params.get('js') !== null && document.getElementById('jp-text-sub')) document.getElementById('jp-text-sub').value = params.get('js');
       if (params.get('jf')) document.getElementById('jp-frame').value = params.get('jf');
@@ -3250,7 +3256,6 @@ ${componentsXml}      </components>
         document.getElementById('pet-frame').value = params.get('pf');
       }
       if (params.get('php')) document.getElementById('pet-hole-pos').value = params.get('php');
-      if (params.get('pdec')) setPetDeco(params.get('pdec'));
       if (params.get('prev')) {
         document.getElementById('pet-reverse-enable').checked = (params.get('prev') === '1');
         togglePetReverseUI();
